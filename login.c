@@ -6,7 +6,6 @@ int user_choice();
 void user_input();
 void user_register();
 int username_check();
-int file_number_lines();
 int user_login_check();
 void login_output();
 
@@ -32,7 +31,7 @@ int main() {
 
         else if (choice==2) {
             user_input();
-            login_output(user_login_check(file_number_lines()));
+            login_output(user_login_check());
         }
 
         else if (choice==3) {
@@ -78,7 +77,6 @@ void user_register() {
 }
 
 int username_check() {
-    int count = file_number_lines();
     int user_exist = 1;
 
     FILE *fptr;
@@ -89,7 +87,7 @@ int username_check() {
     char username[20], password1[8];
 
     int i=1;
-    while(i<=count) {
+    while(1) {
         fscanf(fptr, "%s", username);
         fscanf(fptr, "%s", password1);
         i++;
@@ -104,20 +102,7 @@ int username_check() {
     return user_exist;
 }
 
-int file_number_lines() {
-    FILE *fptr;
-    fptr = fopen("user.txt", "r");
-    char ch = fgetc(fptr);
-    int count=0;
-    while(ch != EOF) {
-        ch = fgetc(fptr);
-        if (ch == '\n') count++;
-    }
-    fclose(fptr);
-    return count;
-}
-
-int user_login_check(int count) {
+int user_login_check() {
     int status=0;
     FILE *fptr;
 
@@ -127,7 +112,7 @@ int user_login_check(int count) {
     char username[20], password1[8];
 
     int i=1;
-    while(i<=count) {
+    while(1) {
         fscanf(fptr, "%s", username);
         fscanf(fptr, "%s", password1);
         i++;
