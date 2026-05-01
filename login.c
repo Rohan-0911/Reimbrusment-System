@@ -9,6 +9,8 @@ int username_check();
 int user_login_check();
 void login_output();
 
+char user_filename[] = "files/user.txt";
+
 char user_name[20], password[8];
 
 int choice, status=0;
@@ -68,7 +70,7 @@ void user_input() {
 void user_register() {
     FILE *fptr;
 
-    fptr = fopen("user.txt", "a");
+    fptr = fopen(user_filename, "a");
     fprintf(fptr, "%s", user_name);
     fputc(' ', fptr);
     fprintf(fptr, "%s", password);
@@ -81,7 +83,7 @@ int username_check() {
 
     FILE *fptr;
 
-    fptr = fopen("user.txt", "r");
+    fptr = fopen(user_filename, "r");
     rewind(fptr);
     
     char username[20], password1[8];
@@ -96,6 +98,9 @@ int username_check() {
             user_exist = 0; 
             break;
         }
+        else if (username == "EOF") {
+            break;
+        }
     }
 
     fclose(fptr);
@@ -106,12 +111,13 @@ int user_login_check() {
     int status=0;
     FILE *fptr;
 
-    fptr = fopen("user.txt", "r");
+    fptr = fopen(user_filename, "r");
     rewind(fptr);
     
     char username[20], password1[8];
 
     int i=1;
+
     while(1) {
         fscanf(fptr, "%s", username);
         fscanf(fptr, "%s", password1);
@@ -122,6 +128,9 @@ int user_login_check() {
                 status++; 
                 break;
             }
+        }
+        else if (username == "EOF") {
+            break;
         }
     }
 
