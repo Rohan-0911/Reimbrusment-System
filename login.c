@@ -11,7 +11,7 @@ void login_output(int status);
 
 
 char user_filename[] = "files/user.txt";
-char user_name[40], password[8];
+char user_name[40], password[10], position[10];
 int choice, status=0;
 
 
@@ -87,6 +87,8 @@ void user_register() {
     fprintf(fptr, "%s", user_name);
     fputc(' ', fptr);
     fprintf(fptr, "%s", password);
+    fputc(' ', fptr);
+    fputc('admin', fptr);
     fputc('\n', fptr);
     fclose(fptr);
 }
@@ -101,7 +103,7 @@ int username_check() {
     
     char username[20], password1[8];
 
-    while(fscanf(fptr, "%s %s", username, password1) == 2) {
+    while(fscanf(fptr, "%s %s %s", username, password1, position) == 2) {
 
         if (strcmp(username, user_name) == 0) {
             user_exist = 0; 
@@ -122,7 +124,7 @@ int user_login_check() {
     
     char username[20], password1[8];
 
-    while(fscanf(fptr, "%s %s", username, password1) == 2) {
+    while(fscanf(fptr, "%s %s %s", username, password1, position) == 2) {
         if (strcmp(username, user_name) == 0) {
             if (strcmp(password1, password) == 0) {
                 status++; 
