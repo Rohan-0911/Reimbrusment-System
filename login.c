@@ -7,13 +7,13 @@ void user_input();
 void user_register();
 int username_check();
 int user_login_check();
-void login_output();
+void login_output(int status);
+
 
 char user_filename[] = "files/user.txt";
-
-char user_name[20], password[8];
-
+char user_name[40], password[8];
 int choice, status=0;
+
 
 int main() {
 
@@ -49,9 +49,8 @@ int main() {
 }
 
 int user_choice() {
-    choice;
-    printf("\n1. Register / Sign-In\n");
-    printf("2. Log-In/Sign-In\n");
+    printf("\n1. Register your Company/Organistaion\n");
+    printf("2. Log-In\n");
     printf("3. Exit\n");
     printf("Choice: ");
     scanf("%d", &choice);
@@ -60,8 +59,22 @@ int user_choice() {
 }
 
 void user_input() {
-    printf("Enter user name: ");
-    scanf("%s", user_name);
+    int valid_email = 0;
+    while(valid_email != 1) {
+        printf("Enter user name: ");
+        scanf(" %s", user_name);
+        for (int i = 0; user_name[i] != '\0' ; i++) {
+            if (user_name[i] == '@') {
+                valid_email++;
+            }
+        }
+        if (valid_email == 1) {
+            continue;
+        }
+        printf("Invalid E-mail\n");
+        printf("Try again\n");
+        valid_email = 0;
+    }
     printf("Enter Password: ");
     scanf("%s", password);
     printf("\n");
@@ -88,17 +101,10 @@ int username_check() {
     
     char username[20], password1[8];
 
-    int i=1;
-    while(1) {
-        fscanf(fptr, "%s", username);
-        fscanf(fptr, "%s", password1);
-        i++;
+    while(fscanf(fptr, "%s %s", username, password1) == 2) {
 
         if (strcmp(username, user_name) == 0) {
             user_exist = 0; 
-            break;
-        }
-        else if (username == "EOF") {
             break;
         }
     }
@@ -116,21 +122,12 @@ int user_login_check() {
     
     char username[20], password1[8];
 
-    int i=1;
-
-    while(1) {
-        fscanf(fptr, "%s", username);
-        fscanf(fptr, "%s", password1);
-        i++;
-
+    while(fscanf(fptr, "%s %s", username, password1) == 2) {
         if (strcmp(username, user_name) == 0) {
             if (strcmp(password1, password) == 0) {
                 status++; 
                 break;
             }
-        }
-        else if (username == "EOF") {
-            break;
         }
     }
 
