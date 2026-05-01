@@ -1,3 +1,4 @@
 rohan@gmail.com @rohan admin
 rohan@vit.edu 12345 emplyoee
 aadesh@gmail.com 12345 manager
+rajat@gmail.com 12345 admin

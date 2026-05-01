@@ -2,15 +2,23 @@
 #include<string.h>
 #include<stdlib.h>
 
+#include<direct.h>
+
 int user_choice();
 void user_input();
+void company_name_input();
+void country_input();
+void name_input();
+void email_input();
 void user_register();
 int username_check();
 int user_login_check();
 void login_output(int status);
 
+char company_name[100];
 
-char user_filename[] = "files/user.txt";
+char login_creds[] = "files/login_cred.txt", company_name_file[] = "files/company.txt";
+
 char user_name[40], password[10], position[10];
 int choice, status=0;
 
@@ -59,9 +67,46 @@ int user_choice() {
 }
 
 void user_input() {
+    company_name_input();
+    country_input();
+    name_input();
+    email_input();
+    printf("Enter Password: ");
+    scanf("%s", password);
+    printf("\n");
+}
+
+void company_name_input() {
+    FILE *fptr;
+
+    char dummy_company_name[100];
+
+    fptr = fopen(company_name_file, "a+");
+
+    while(1) {
+        printf("Enter Company Name: ");
+        scanf("%s", company_name);
+
+        rewind(fptr);
+
+        while(fscanf(fptr, "%s", dummy_company_name) == 1) {
+            if (strcmp(company_name, dummy_company_name) == 0) {
+                printf("\nCompany already exists.\n");
+                break;
+            }
+        }
+        break;
+    }
+
+    fprintf(fptr, "%s\n", company_name);
+
+    fclose(fptr);
+}
+
+void email_input() {
     int valid_email = 0;
     while(valid_email != 1) {
-        printf("Enter user name: ");
+        printf("Enter E-mail Address: ");
         scanf(" %s", user_name);
         for (int i = 0; user_name[i] != '\0' ; i++) {
             if (user_name[i] == '@') {
@@ -71,24 +116,21 @@ void user_input() {
         if (valid_email == 1) {
             continue;
         }
-        printf("Invalid E-mail\n");
-        printf("Try again\n");
+        printf("\nInvalid E-mail\n");
+        printf("Try again\n\n");
         valid_email = 0;
     }
-    printf("Enter Password: ");
-    scanf("%s", password);
-    printf("\n");
 }
 
 void user_register() {
     FILE *fptr;
 
-    fptr = fopen(user_filename, "a");
+    fptr = fopen(login_creds, "a");
     fprintf(fptr, "%s", user_name);
     fputc(' ', fptr);
     fprintf(fptr, "%s", password);
     fputc(' ', fptr);
-    fputc('admin', fptr);
+    fprintf(fptr, "%s", "admin");
     fputc('\n', fptr);
     fclose(fptr);
 }
@@ -98,7 +140,7 @@ int username_check() {
 
     FILE *fptr;
 
-    fptr = fopen(user_filename, "r");
+    fptr = fopen(login_creds, "r");
     rewind(fptr);
     
     char username[20], password1[8];
@@ -119,7 +161,7 @@ int user_login_check() {
     int status=0;
     FILE *fptr;
 
-    fptr = fopen(user_filename, "r");
+    fptr = fopen(login_creds, "r");
     rewind(fptr);
     
     char username[20], password1[8];
