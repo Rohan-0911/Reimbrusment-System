@@ -224,16 +224,18 @@ int confirmation() {
 }
 
 void pass_input() {
+    char ALPHA[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    char alpha[] = "abcdefghijklmnopqrstuvwxyz";
     char alpha1[] = {'q','w','e','r','t','y','u','i','o','p','\0'};
     char alpha2[] = {'a','s','d','f','g','h','j','k','l','\0'};
     char alpha3[] = {'z','x','c','v','b','n','m','\0'};
     char num[] = {'1','2','3','4','5','6','7','8','9','0','\0'};
     char sp_char[] = {'@','#','$','&','*','/','%','_','-','\0'};
-    int c1=1, c2=1, c3=1, c4=1, c5=1, c6=1;
-    printf("\nPassword Conditions:\n1. 8 minimum character\n2. Atleast one alphabet from each row\n3, Atleast one number\n4. Atleast one special character from below:\n\t(@ , # , $ , & , * , / , %% , _ , - )\n");
-    int c = c1+c2+c3+c4+c5+c6;
-    while(c != 0) {
-        c1=1, c2=1, c3=1, c4=1, c5=1, c6=1;
+    printf("\nPassword Conditions:\n1. 8 minimum character\n2. Atleast one alphabet from each row\n3. Atleast one uppercase letter\n4. Atleast one lowercase letter\n5. Atleast one number\n6. Atleast one special character from below: (@ , # , $ , & , * , / , %% , _ , - )\n");
+    int c=8;
+    do {
+        int c1=1, c2=1, c3=1, c4=1, c5=1, c6=1, c7=1, c8=1;
+
         printf("\nEnter your password: ");
         scanf("%s", &password);
         printf("\n");
@@ -244,21 +246,26 @@ void pass_input() {
         }
         if (len>=8) c1 = 0;
 
-        c2 = is_char_present(password, len, alpha1, (sizeof(alpha1)/sizeof(alpha1[0]))-1);
-        c3 = is_char_present(password, len, alpha2, (sizeof(alpha2)/sizeof(alpha2[0]))-1);
-        c4 = is_char_present(password, len, alpha3, (sizeof(alpha3)/sizeof(alpha3[0]))-1);
-        c5 = is_char_present(password, len, num, (sizeof(num)/sizeof(num[0]))-1);
-        c6 = is_char_present(password, len, sp_char, (sizeof(sp_char)/sizeof(sp_char[0]))-1);
+        c2 = is_char_present(password, len, ALPHA, (sizeof(sp_char)/sizeof(ALPHA[0]))-1);
+        c3 = is_char_present(password, len, alpha, (sizeof(sp_char)/sizeof(alpha[0]))-1);
+        c4 = is_char_present(password, len, alpha1, (sizeof(alpha1)/sizeof(alpha1[0]))-1);
+        c5 = is_char_present(password, len, alpha2, (sizeof(alpha2)/sizeof(alpha2[0]))-1);
+        c6 = is_char_present(password, len, alpha3, (sizeof(alpha3)/sizeof(alpha3[0]))-1);
+        c7 = is_char_present(password, len, num, (sizeof(num)/sizeof(num[0]))-1);
+        c8 = is_char_present(password, len, sp_char, (sizeof(sp_char)/sizeof(sp_char[0]))-1);
+        
      
         if (c1) printf("Less than 8 characters\n");
-        if (c2) printf("Alphabet from row 1 is missing\n");
-        if (c3) printf("Alphabet from row 2 is missing\n");
-        if (c4) printf("Alphabet from row 3 is missing\n");
-        if (c5) printf("Special Character is missing\n");
-        if (c6) printf("Number is missing\n");
+        if (c2) printf("Uppercase letter missing\n");
+        if (c3) printf("Lowercase letter missing\n");
+        if (c4) printf("Alphabet from row 1 is missing\n");
+        if (c5) printf("Alphabet from row 2 is missing\n");
+        if (c6) printf("Alphabet from row 3 is missing\n");
+        if (c7) printf("Special Character is missing\n");
+        if (c8) printf("Number is missing\n");
 
-        c = c1+c2+c3+c4+c5+c6;
-    }
+        c = c1+c2+c3+c4+c5+c6+c7+c8;
+    } while(c != 0);
     printf("Password Accepted\n");
 }
 
