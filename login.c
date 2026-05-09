@@ -336,8 +336,8 @@ void company_register() {
     fclose(fptr);
 
     strcpy(register_company, "");
-    printf("hi%shi", register_company);
-    strcpy(register_company, "files/Company");
+    printf("%s", register_company);
+    strcpy(register_company, "files/Company/");
 }
 
 void user_input() {
