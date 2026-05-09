@@ -85,10 +85,6 @@ int user_choice() {
     return choice;
 }
 
-void user_input() {
-
-}
-
 void company_name_input() {
     printf("Enter Company Name: ");
     scanf("%s", company_name);
@@ -226,9 +222,9 @@ int confirmation() {
 void pass_input() {
     char ALPHA[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     char alpha[] = "abcdefghijklmnopqrstuvwxyz";
-    char alpha1[] = {'q','w','e','r','t','y','u','i','o','p','\0'};
-    char alpha2[] = {'a','s','d','f','g','h','j','k','l','\0'};
-    char alpha3[] = {'z','x','c','v','b','n','m','\0'};
+    char alpha1[] = "qwertyuiopQWERTYUIOP";
+    char alpha2[] = "asdfghjklASDFGHJKL";
+    char alpha3[] = "zxcvbnmZXCVBNM";
     char num[] = {'1','2','3','4','5','6','7','8','9','0','\0'};
     char sp_char[] = {'@','#','$','&','*','/','%','_','-','\0'};
     printf("\nPassword Conditions:\n1. 8 minimum character\n2. Atleast one alphabet from each row\n3. Atleast one uppercase letter\n4. Atleast one lowercase letter\n5. Atleast one number\n6. Atleast one special character from below: (@ , # , $ , & , * , / , %% , _ , - )\n");
@@ -246,8 +242,8 @@ void pass_input() {
         }
         if (len>=8) c1 = 0;
 
-        c2 = is_char_present(password, len, ALPHA, (sizeof(sp_char)/sizeof(ALPHA[0]))-1);
-        c3 = is_char_present(password, len, alpha, (sizeof(sp_char)/sizeof(alpha[0]))-1);
+        c2 = is_char_present(password, len, ALPHA, (sizeof(ALPHA)/sizeof(ALPHA[0]))-1);
+        c3 = is_char_present(password, len, alpha, (sizeof(alpha)/sizeof(alpha[0]))-1);
         c4 = is_char_present(password, len, alpha1, (sizeof(alpha1)/sizeof(alpha1[0]))-1);
         c5 = is_char_present(password, len, alpha2, (sizeof(alpha2)/sizeof(alpha2[0]))-1);
         c6 = is_char_present(password, len, alpha3, (sizeof(alpha3)/sizeof(alpha3[0]))-1);
@@ -261,8 +257,8 @@ void pass_input() {
         if (c4) printf("Alphabet from row 1 is missing\n");
         if (c5) printf("Alphabet from row 2 is missing\n");
         if (c6) printf("Alphabet from row 3 is missing\n");
-        if (c7) printf("Special Character is missing\n");
-        if (c8) printf("Number is missing\n");
+        if (c7) printf("Number is missing\n");
+        if (c8) printf("Special Character is missing\n");
 
         c = c1+c2+c3+c4+c5+c6+c7+c8;
     } while(c != 0);
@@ -338,42 +334,32 @@ void company_register() {
     fptr = fopen(company_list_file,"a");
     fprintf(fptr, "%s\n", company_name);
     fclose(fptr);
+
+    strcpy(register_company, "");
+    printf("hi%shi", register_company);
+    strcpy(register_company, "files/Company");
 }
 
-int user_check() {
-    int user_exist = 1;
+void user_input() {
+    printf("Enter your E-mail address: ");
+    scanf("%s", email);
 
-    FILE *fptr;
-
-    fptr = fopen(login_creds, "r");
-    rewind(fptr);
-    
-    char username[20], password1[8];
-
-    while(fscanf(fptr, "%s %s %s", username, password1, position) == 3) {
-
-        if (strcmp(username, user_name) == 0) {
-            user_exist = 0; 
-            break;
-        }
-    }
-
-    fclose(fptr);
-    return user_exist;
+    printf("Enter your Password: ");
+    scanf("%s", password);
 }
 
 int user_login_check() {
-    char password[10];
     int status=0;
     FILE *fptr;
 
     fptr = fopen(login_creds, "r");
     rewind(fptr);
     
-    char username[20], password1[8];
+    char email1[100], password1[100];
 
-    while(fscanf(fptr, "%s %s %s", username, password1, position) == 2) {
-        if (strcmp(username, user_name) == 0) {
+    while(fscanf(fptr, "%s %s %s", email1, password1, position) == 3) {
+        printf("\n%s %s\n", email1, password1);
+        if (strcmp(email1, email) == 0) {
             if (strcmp(password1, password) == 0) {
                 status++; 
                 break;
@@ -387,10 +373,10 @@ int user_login_check() {
 
 void login_output(int status) {
     if (status == 1) {
-        printf("Username & Password is correct.\nLogin Successful!!\n");
+        printf("E-mail & Password are correct.\nLogin Successful!!\n");
     }
 
     else {
-        printf("Incorrect Username and Password.\nTry Again.\n");
+        printf("Incorrect E-mail and Password.\nTry Again.\n");
     }
 }
