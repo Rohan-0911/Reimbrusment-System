@@ -236,7 +236,7 @@ void pass_input() {
         scanf(" %[^\n]", password);
         printf("\n");
 
-        int len = (password);
+        int len = strlen(password);
 
         if (len>=8) c1 = 0;
 
