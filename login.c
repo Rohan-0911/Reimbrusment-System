@@ -27,7 +27,7 @@ char company_name[100];
 int country_choice;
 char country[20], name[100], email[100], password[100];;
 
-char company_list_file[] = "files/company.txt", register_company[] = "files/Company/";
+char company_list_file[] = "files/company.txt", register_company[100] = "files/Company/";
 
 char user_name[40], position[10], login_creds[] = "files/login_cred.txt";
 int choice, status=0;
@@ -76,7 +76,7 @@ int main() {
 }
 
 int user_choice() {
-    printf("\n1. Register your Company/Organistaion\n");
+    printf("\n1. Register your Company/Organisation\n");
     printf("2. Log-In\n");
     printf("3. Exit\n");
     printf("Choice: ");
@@ -87,7 +87,7 @@ int user_choice() {
 
 void company_name_input() {
     printf("Enter Company Name: ");
-    scanf("%s", company_name);
+    scanf(" %[^\n]", company_name);
 }
 
 int is_company_name_valid() {
@@ -117,7 +117,7 @@ void country_input() {
         printf("2, USA\n");
         printf("3. UAE\n");
         printf("4. Europe\n");
-        printf("5. Austrillia\n\n");
+        printf("5. Australia\n\n");
         printf("Enter country choice (1-5): ");
         scanf("%d", &country_choice);
         i = country_choice;
@@ -141,7 +141,7 @@ void country_input() {
             break;
         }
         case 5: {
-            strcpy(country, "Austrillia");
+            strcpy(country, "Australia");
             break;
         }
     }
@@ -151,14 +151,14 @@ void country_input() {
 
 void name_input() {
     printf("\nEnter your name: ");
-    scanf("%s", &name);
+    scanf(" %[^\n]", name);
 }
 
 void email_input() {
     int valid_email = 0, email_exist = 1;
     while(valid_email != 1 && email_exist == 1) {
         printf("\nEnter E-mail Address: ");
-        scanf("%s", email);
+        scanf(" %[^\n]", email);
         for (int i = 0; email[i] != '\0' ; i++) {
             if (email[i] == '@') {
                 valid_email++;
@@ -233,13 +233,11 @@ void pass_input() {
         int c1=1, c2=1, c3=1, c4=1, c5=1, c6=1, c7=1, c8=1;
 
         printf("\nEnter your password: ");
-        scanf("%s", &password);
+        scanf(" %[^\n]", password);
         printf("\n");
 
-        int len = 0;
-        for (int i=0; password[i] != '\0'; i++) {
-            len++;
-        }
+        int len = (password);
+
         if (len>=8) c1 = 0;
 
         c2 = is_char_present(password, len, ALPHA, (sizeof(ALPHA)/sizeof(ALPHA[0]))-1);
@@ -310,7 +308,7 @@ void company_register() {
 
 
     strcpy(dummy_reg_comp, register_company);
-    strcat(dummy_reg_comp, "/emplyoe.txt");
+    strcat(dummy_reg_comp, "/employee.txt");
     fptr = fopen(dummy_reg_comp, "w");
     fclose(fptr);
 
@@ -342,10 +340,10 @@ void company_register() {
 
 void user_input() {
     printf("Enter your E-mail address: ");
-    scanf("%s", email);
+    scanf(" %[^\n]", email);
 
     printf("Enter your Password: ");
-    scanf("%s", password);
+    scanf(" %[^\n]", password);
 }
 
 int user_login_check() {
