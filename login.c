@@ -356,7 +356,6 @@ int user_login_check() {
     char email1[100], password1[100];
 
     while(fscanf(fptr, "%s %s %s", email1, password1, position) == 3) {
-        printf("\n%s %s\n", email1, password1);
         if (strcmp(email1, email) == 0) {
             if (strcmp(password1, password) == 0) {
                 status++; 
