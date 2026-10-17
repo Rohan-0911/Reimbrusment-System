@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Reimbursement System: Corporate Expense and Reimbursement Management System." />
+  <title>Reimbursement System: Expense Ledger and Management</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/expenses.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+
+  <!-- ============================================================
+     AUTH PAGE
+     ============================================================ -->
+  <div id="auth-page" class="auth-page" style="display:none">
+
+    <div class="auth-container">
+      <!-- Logo -->
+      <div class="auth-logo">
+        <div class="auth-logo-badge">RS</div>
+        <h1>Reimbursement System</h1>
+        <p>Corporate Expense and Reimbursement Control</p>
+      </div>
+
+      <!-- Auth Card -->
+      <div class="auth-card">
+
+        <!-- Tab Navigation -->
+        <div class="auth-tabs" role="tablist">
+          <button class="auth-tab active" data-tab="login" role="tab" aria-selected="true">Sign In</button>
+          <button class="auth-tab" data-tab="signup" role="tab" aria-selected="false">Create Company</button>
+        </div>
+
+        <!-- LOGIN PANEL -->
+        <div class="auth-panel active" id="panel-login" role="tabpanel">
+          <div class="auth-error" id="login-error" role="alert"></div>
+
+          <form id="login-form" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="login-email">Email Address</label>
+              <div class="input-wrapper">
+                <span class="input-icon-svg">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M2 5l6 4 6-4"/></svg>
+                </span>
+                <input class="form-control" type="email" id="login-email" placeholder="name@company.com"
+                  autocomplete="email" required />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:14px">
+              <label class="form-label" for="login-password">Password</label>
+              <div class="input-wrapper">
+                <span class="input-icon-svg">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V4.5a3 3 0 016 0V7"/></svg>
+                </span>
+                <input class="form-control" type="password" id="login-password" placeholder="Enter password"
+                  autocomplete="current-password" required />
+                <button type="button" class="password-toggle" aria-label="Toggle password visibility">Show</button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-submit" id="login-submit">
+              Sign In
+            </button>
+          </form>
+        </div>
+
+        <!-- SIGNUP PANEL -->
+        <div class="auth-panel" id="panel-signup" role="tabpanel">
+          <div class="auth-error" id="signup-error" role="alert"></div>
+
+          <form id="signup-form" novalidate>
+
+            <p class="auth-section-title">Company Registration</p>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="signup-company">Company Name</label>
+                <div class="input-wrapper">
+                  <span class="input-icon-svg">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="10" height="12"/><path d="M6 5h1M9 5h1M6 8h1M9 8h1M6 11h1M9 11h1"/></svg>
+                  </span>
+                  <input class="form-control" type="text" id="signup-company" placeholder="Reimburse Sys" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="signup-country">Country</label>
+                <div class="input-wrapper">
+                  <span class="input-icon-svg">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2a10 10 0 010 12M8 2a10 10 0 000 12"/></svg>
+                  </span>
+                  <input class="form-control" type="text" id="signup-country" value="India" placeholder="India" required />
+                </div>
+              </div>
+            </div>
+
+            <p class="auth-section-title" style="margin-top:18px">Primary Administrator</p>
+
+            <div class="form-group">
+              <label class="form-label" for="signup-name">Full Name</label>
+              <div class="input-wrapper">
+                <span class="input-icon-svg">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
+                </span>
+                <input class="form-control" type="text" id="signup-name" placeholder="Rohan" autocomplete="name"
+                  required />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top:12px">
+              <label class="form-label" for="signup-email">Official Email</label>
+              <div class="input-wrapper">
+                <span class="input-icon-svg">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M2 5l6 4 6-4"/></svg>
+                </span>
+                <input class="form-control" type="email" id="signup-email" placeholder="admin@company.com"
+                  autocomplete="email" required />
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top:12px">
+              <div class="form-group">
+                <label class="form-label" for="signup-password">Password</label>
+                <div class="input-wrapper">
+                  <span class="input-icon-svg">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V4.5a3 3 0 016 0V7"/></svg>
+                  </span>
+                  <input class="form-control" type="password" id="signup-password" placeholder="Min 6 chars"
+                    autocomplete="new-password" required />
+                  <button type="button" class="password-toggle" aria-label="Toggle password visibility">Show</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="signup-confirm">Confirm Password</label>
+                <div class="input-wrapper">
+                  <span class="input-icon-svg">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V4.5a3 3 0 016 0V7"/></svg>
+                  </span>
+                  <input class="form-control" type="password" id="signup-confirm" placeholder="Repeat"
+                    autocomplete="new-password" required />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-submit" id="signup-submit">
+              Register Company
+            </button>
+          </form>
+        </div>
+
+      </div><!-- /auth-card -->
+
+      <!-- Direct Real Product Access -->
+      <div class="demo-access-box">
+        <div class="demo-access-title">Instant Session Access</div>
+        <div class="demo-buttons-grid">
+          <button class="btn btn-secondary" id="demo-admin-btn" onclick="Auth.demoLogin('admin')">
+            Admin Portal
+          </button>
+          <button class="btn btn-secondary" id="demo-employee-btn" onclick="Auth.demoLogin('employee')">
+            Employee Portal
+          </button>
+        </div>
+      </div>
+
+      <!-- Legal Footer -->
+      <div class="auth-footer">
+        <div>Reimbursement System &copy; 2026. All rights reserved.</div>
+        <div class="auth-footer-links">
+          <button type="button" onclick="UI.openTermsModal()">Terms of Service</button>
+          <span>/</span>
+          <button type="button" onclick="UI.openPrivacyModal()">Privacy Policy</button>
+        </div>
+      </div>
+
+    </div><!-- /auth-container -->
+  </div><!-- /auth-page -->
+
+
+  <!-- ============================================================
+     APP SHELL (shown after login)
+     ============================================================ -->
+  <div id="app-shell" class="app-shell" style="display:none">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar" role="navigation" aria-label="Main navigation">
+
+      <!-- Brand -->
+      <a class="sidebar-brand" href="#dashboard">
+        <div class="sidebar-brand-mark">RS</div>
+        <div class="sidebar-brand-text">
+          <div class="sidebar-brand-name">Reimbursement System</div>
+          <div class="sidebar-brand-tagline">Ledger and Approvals</div>
+        </div>
+      </a>
+
+      <!-- User info -->
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">--</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">User Account</div>
+          <div class="sidebar-user-role">Role</div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Dynamically built by Layout.buildNav() -->
+      </nav>
+
+      <!-- Footer -->
+      <div class="sidebar-footer">
+        <button class="sidebar-toggle" id="sidebar-toggle-btn" aria-label="Toggle sidebar">
+          <span class="sidebar-toggle-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+          </span>
+          <span class="sidebar-toggle-text">Collapse Menu</span>
+        </button>
+        <button class="btn-logout" id="logout-btn" aria-label="Sign out">
+          <span class="btn-logout-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H5"/></svg>
+          </span>
+          <span class="btn-logout-text">Exit Session</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Open menu">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+          </button>
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <span class="breadcrumb-item">Reimbursement System</span>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-item current" id="breadcrumb-current">Dashboard</span>
+          </nav>
+        </div>
+        <div class="topbar-right">
+          <div class="company-badge">
+            <span class="company-badge-dot"></span>
+            <span id="topbar-company">Company</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div class="content-area">
+
+        <!-- DASHBOARD PAGE -->
+        <div class="page-view" id="page-dashboard">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Dashboard Overview</h1>
+              <p class="page-subtitle">Real-time metrics, status distribution, and recent expense activity</p>
+            </div>
+            <button class="btn btn-primary" onclick="Router.navigate('new-expense')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              New Expense
+            </button>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="stats-grid" id="dashboard-stats">
+            <!-- Rendered by dashboard.js -->
+          </div>
+
+          <!-- Charts Row -->
+          <div class="charts-grid">
+            <!-- Status Donut -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <div class="chart-card-title">Status Allocation</div>
+                  <div class="chart-card-subtitle">Volume breakdown by approval state</div>
+                </div>
+              </div>
+              <div class="donut-container">
+                <div class="donut-canvas-wrap">
+                  <canvas id="donut-status" width="160" height="160"></canvas>
+                  <div class="donut-center">
+                    <div class="donut-center-value" id="donut-total">0</div>
+                    <div class="donut-center-label">Count</div>
+                  </div>
+                </div>
+                <div class="chart-legend" id="status-legend">
+                  <!-- Rendered by dashboard.js -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Bar -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <div class="chart-card-title">Category Breakdown</div>
+                  <div class="chart-card-subtitle">Aggregated expenditures by budget code</div>
+                </div>
+              </div>
+              <div id="category-bars" class="bar-chart">
+                <!-- Rendered by dashboard.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Expenses & Top Spenders -->
+          <div style="display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start"
+            id="dashboard-bottom-grid">
+            <div class="recent-card">
+              <div class="recent-card-header">
+                <h3 style="font-size:0.875rem">Recent Ledger Entries</h3>
+                <button class="btn btn-sm btn-secondary" onclick="Router.navigate('my-expenses')">View Full Ledger</button>
+              </div>
+              <div class="table-wrapper" style="border:none">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Description</th>
+                      <th>Category</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-expenses-body">
+                    <tr>
+                      <td colspan="5" class="data-loading-state">Loading ledger...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Top Spenders -->
+            <div id="top-spenders-card" style="width:280px">
+              <div class="chart-card" style="padding:0">
+                <div class="chart-card-header" style="padding:16px 16px 8px">
+                  <div>
+                    <div class="chart-card-title">Top Spenders</div>
+                    <div class="chart-card-subtitle">Highest volume submitters</div>
+                  </div>
+                </div>
+                <div id="top-spenders" style="padding:8px">
+                  <!-- Rendered by dashboard.js -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MY EXPENSES PAGE -->
+        <div class="page-view" id="page-my-expenses">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">My Expenses</h1>
+              <p class="page-subtitle">Track, filter, and review claims filed under your account</p>
+            </div>
+            <button class="btn btn-primary" onclick="Router.navigate('new-expense')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              New Expense
+            </button>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="filter-bar">
+            <div class="filter-search" style="flex:1">
+              <span class="filter-search-icon">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+              </span>
+              <input class="form-control" type="search" id="my-expenses-search" placeholder="Filter by description..." />
+            </div>
+            <div class="filter-divider"></div>
+            <select class="form-control filter-select" id="my-expenses-status">
+              <option value="">All States</option>
+              <option value="pending">Pending</option>
+              <option value="in_review">In Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select class="form-control filter-select" id="my-expenses-sort">
+              <option value="date_desc">Date: Newest First</option>
+              <option value="date_asc">Date: Oldest First</option>
+              <option value="amount_desc">Amount: Highest</option>
+              <option value="amount_asc">Amount: Lowest</option>
+            </select>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody id="my-expenses-tbody">
+                <!-- Rendered by expenses.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono)" id="my-expenses-count"></span>
+          </div>
+        </div>
+
+        <!-- ALL EXPENSES PAGE (Admin) -->
+        <div class="page-view" id="page-all-expenses">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Company Expenses</h1>
+              <p class="page-subtitle">Consolidated view of organization claims for review and audit</p>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <div class="filter-search" style="flex:1">
+              <span class="filter-search-icon">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+              </span>
+              <input class="form-control" type="search" id="all-expenses-search"
+                placeholder="Filter by description, employee name..." />
+            </div>
+            <div class="filter-divider"></div>
+            <select class="form-control filter-select" id="all-expenses-status">
+              <option value="">All States</option>
+              <option value="pending">Pending</option>
+              <option value="in_review">In Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select class="form-control filter-select" id="all-expenses-sort">
+              <option value="date_desc">Date: Newest First</option>
+              <option value="date_asc">Date: Oldest First</option>
+              <option value="amount_desc">Amount: Highest</option>
+              <option value="amount_asc">Amount: Lowest</option>
+            </select>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Employee</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody id="all-expenses-tbody">
+                <!-- Rendered by expenses.js -->
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono)" id="all-expenses-count"></span>
+          </div>
+        </div>
+
+        <!-- NEW EXPENSE PAGE -->
+        <div class="page-view" id="page-new-expense">
+          <div class="page-header" style="max-width:720px;margin:0 auto 24px">
+            <div>
+              <h1 class="page-title">Submit New Expense</h1>
+              <p class="page-subtitle">File receipt documentation and business categorization</p>
+            </div>
+          </div>
+
+          <div class="expense-form-card">
+            <div class="expense-form-header">
+              <h2>Expense Claim Details</h2>
+              <p>Fields marked with asterisk (*) are required for accounting compliance</p>
+            </div>
+
+            <div class="expense-form-body">
+              <form id="new-expense-form" novalidate>
+
+                <!-- Amount & Currency -->
+                <div class="form-section">
+                  <div class="form-section-title">Valuation</div>
+                  <div class="amount-row">
+                    <div class="form-group">
+                      <label class="form-label" for="expense-amount">Amount *</label>
+                      <input class="form-control font-mono" type="number" id="expense-amount" placeholder="0.00" min="0.01"
+                        step="0.01" required />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="expense-currency">Currency</label>
+                      <select class="form-control font-mono" id="expense-currency">
+                        <!-- Populated by JS -->
+                      </select>
+                    </div>
+                  </div>
+                  <div class="amount-preview" id="amount-preview"></div>
+                </div>
+
+                <!-- Category & Date -->
+                <div class="form-section">
+                  <div class="form-section-title">Classification</div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="expense-category">Category *</label>
+                      <select class="form-control" id="expense-category" required>
+                        <option value="">Select category...</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="expense-date">Incurred Date *</label>
+                      <input class="form-control font-mono" type="date" id="expense-date" required />
+                    </div>
+                  </div>
+                  <div class="form-group" style="margin-top:14px">
+                    <label class="form-label" for="expense-description">Business Justification *</label>
+                    <textarea class="form-control" id="expense-description"
+                      placeholder="Itemized rationale (e.g. Client strategic lunch in Chicago with regional director)"
+                      rows="3" required></textarea>
+                    <div class="form-hint">Provide adequate detail to ensure swift administrative review.</div>
+                  </div>
+                </div>
+
+                <!-- Receipt Upload -->
+                <div class="form-section">
+                  <div class="form-section-title">Receipt Documentation</div>
+                  <div class="file-upload-area" id="file-drop-area">
+                    <input type="file" id="receipt-file" accept="image/jpeg,image/png,image/webp,application/pdf" />
+                    <div class="file-upload-icon-svg">
+                      <svg width="24" height="24" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/></svg>
+                    </div>
+                    <div class="file-upload-text">
+                      <span class="file-upload-highlight">Select voucher file</span> or drag and drop
+                    </div>
+                    <div class="file-upload-hint">Accepted: JPEG, PNG, WebP, PDF. Maximum file size: 10MB.</div>
+                  </div>
+
+                  <div class="file-preview" id="file-preview">
+                    <img id="file-preview-img" src="" alt="Receipt preview" class="file-preview-img"
+                      style="display:none" />
+                    <div class="file-preview-info">
+                      <div class="file-preview-name" id="file-preview-name">--</div>
+                      <div class="file-preview-size" id="file-preview-size">--</div>
+                    </div>
+                    <button type="button" class="file-preview-remove" id="file-remove-btn">Remove</button>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="expense-cancel">Cancel</button>
+                  <button type="submit" class="btn btn-primary" id="expense-submit-btn">
+                    Submit Expense
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPENSE DETAIL PAGE -->
+        <div class="page-view" id="page-expense-detail">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Expense Details & Audit Trail</h1>
+              <p class="page-subtitle">Full transaction specifications, verification history, and documentation</p>
+            </div>
+            <button class="btn btn-secondary" onclick="history.back()">Back</button>
+          </div>
+          <div id="expense-detail-content">
+            <!-- Rendered by expense-detail.js -->
+          </div>
+        </div>
+
+        <!-- ADMIN USERS PAGE -->
+        <div class="page-view" id="page-admin-users">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Team Directory</h1>
+              <p class="page-subtitle">Manage employee accounts, role authorizations, and platform access</p>
+            </div>
+            <button class="btn btn-primary" id="create-user-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Member
+            </button>
+          </div>
+
+          <div class="filter-bar">
+            <div class="filter-search" style="flex:1">
+              <span class="filter-search-icon">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+              </span>
+              <input class="form-control" type="search" id="users-search" placeholder="Search by name or email address..." />
+            </div>
+            <div class="filter-divider"></div>
+            <select class="form-control filter-select" id="users-role-filter">
+              <option value="">All Tiers</option>
+              <option value="admin">Administrator</option>
+              <option value="employee">Employee</option>
+            </select>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <!-- Rendered by admin.js -->
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono)" id="users-count"></span>
+          </div>
+        </div>
+
+        <!-- ADMIN ANALYTICS PAGE -->
+        <div class="page-view" id="page-admin-stats">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">Financial Analytics</h1>
+              <p class="page-subtitle">Organizational expenditure aggregates and department reporting</p>
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="admin-stats-grid" id="admin-kpi-grid">
+            <!-- Rendered by admin.js -->
+          </div>
+
+          <!-- Charts row -->
+          <div class="analytics-grid">
+            <!-- Status Donut -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <div class="chart-card-title">Value Allocation</div>
+                  <div class="chart-card-subtitle">Aggregated amount by approval status</div>
+                </div>
+              </div>
+              <div class="donut-container">
+                <div class="donut-canvas-wrap">
+                  <canvas id="admin-status-donut" width="160" height="160"></canvas>
+                  <div class="donut-center">
+                    <div class="donut-center-value" id="admin-donut-total">0</div>
+                    <div class="donut-center-label">Records</div>
+                  </div>
+                </div>
+                <div class="chart-legend" id="admin-status-legend"></div>
+              </div>
+            </div>
+
+            <!-- Company Info Card -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <div class="chart-card-title">Corporate Registration Data</div>
+                  <div class="chart-card-subtitle">Entity configuration parameters</div>
+                </div>
+              </div>
+              <div id="company-info">
+                <!-- Rendered by admin.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Spenders -->
+          <div class="spenders-card">
+            <div class="spenders-card-header">
+              <h3 style="font-size:0.875rem">Department Volume Leaders</h3>
+            </div>
+            <div id="admin-top-spenders">
+              <!-- Rendered by admin.js -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- App Footer with Legal Links -->
+        <footer class="app-footer">
+          <div>Reimbursement System Corporate Financial Infrastructure &copy; 2026</div>
+          <div class="app-footer-links">
+            <button type="button" onclick="UI.openTermsModal()">Terms of Service</button>
+            <span>/</span>
+            <button type="button" onclick="UI.openPrivacyModal()">Privacy Policy</button>
+          </div>
+        </footer>
+
+      </div><!-- /content-area -->
+    </main><!-- /main-content -->
+
+  </div><!-- /app-shell -->
+
+
+  <!-- ============================================================
+     CREATE USER MODAL
+     ============================================================ -->
+  <div id="create-user-modal" class="modal-overlay" style="display:none" role="dialog" aria-modal="true"
+    aria-labelledby="create-user-modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="create-user-modal-title" style="font-size:1rem">Provision User Account</h2>
+        <button class="modal-close" id="create-user-modal-close" aria-label="Close">x</button>
+      </div>
+
+      <div class="auth-error" id="create-user-error" role="alert"></div>
+
+      <form id="create-user-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="new-user-name">Full Name *</label>
+          <input class="form-control" type="text" id="new-user-name" placeholder="First and last name" required />
+        </div>
+
+        <div class="form-group" style="margin-top:14px">
+          <label class="form-label" for="new-user-email">Email Address *</label>
+          <input class="form-control" type="email" id="new-user-email" placeholder="user@company.com" required />
+        </div>
+
+        <div class="form-row" style="margin-top:14px">
+          <div class="form-group">
+            <label class="form-label" for="new-user-password">Initial Password *</label>
+            <input class="form-control" type="password" id="new-user-password" placeholder="Min 6 characters"
+              required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-user-role">Role Tier *</label>
+            <select class="form-control" id="new-user-role" required>
+              <option value="">Select role...</option>
+              <option value="employee">Employee</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px">
+          <button type="button" class="btn btn-secondary" onclick="AdminUsers.closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="create-user-submit">Provision User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+     LEGAL MODALS (Terms of Service & Privacy Policy)
+     ============================================================ -->
+  <div id="terms-modal" class="modal-overlay" style="display:none" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Terms of Service</h2>
+        <button class="modal-close" onclick="UI.closeTermsModal()" aria-label="Close">x</button>
+      </div>
+      <div class="legal-body">
+        <p><strong>Effective Date:</strong> October 2026</p>
+        <h3>1. Purpose and Acceptance</h3>
+        <p>Reimbursement System is an enterprise expense governance and ledger management platform. By accessing this platform, users represent that they are authorized agents of their organization and agree to abide by internal corporate procurement policies and these terms.</p>
+        <h3>2. Fiduciary Responsibility and Submissions</h3>
+        <p>All expense claims submitted through this system must represent authentic, legitimate business expenditures incurred in the course of company business. Falsification of receipts or duplicate submissions constitutes grounds for audit, disciplinary measures, and revocation of access.</p>
+        <h3>3. Administrative Audit and Approvals</h3>
+        <p>Organization administrators retain full audit privileges to review, approve, reject, or request amendments to all submitted documentation. All decisions recorded in the audit log are immutable for accounting compliance purposes.</p>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:20px">
+        <button class="btn btn-primary" onclick="UI.closeTermsModal()">Acknowledge</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="privacy-modal" class="modal-overlay" style="display:none" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Privacy Policy</h2>
+        <button class="modal-close" onclick="UI.closePrivacyModal()" aria-label="Close">x</button>
+      </div>
+      <div class="legal-body">
+        <p><strong>Effective Date:</strong> October 2026</p>
+        <h3>1. Data Collection Scope</h3>
+        <p>Reimbursement System processes employee identity data (name, company email, organizational role) and financial voucher metadata (amounts, currencies, dates, merchant details, and uploaded receipt images) solely for corporate accounting and reimbursement fulfillment.</p>
+        <h3>2. Data Retention and Safeguards</h3>
+        <p>Financial records and voucher documents are stored with strict role-based access control. Expense details are accessible only by the submitter and authorized company administrators.</p>
+        <h3>3. Third-Party Sharing</h3>
+        <p>Personal and corporate financial data is never rented or monetized. External exchange rate calculations are executed via secure programmatic currency conversion endpoints without transmitting user-identifying information.</p>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:20px">
+        <button class="btn btn-primary" onclick="UI.closePrivacyModal()">Acknowledge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/expenses.js"></script>
+  <script src="js/new-expense.js"></script>
+  <script src="js/expense-detail.js"></script>
+  <script src="js/admin.js"></script>
+
+</body>
+
+</html>

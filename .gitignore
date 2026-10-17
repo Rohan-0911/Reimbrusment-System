@@ -1,0 +1,49 @@
+# Environment files (contains credentials and secrets)
+.env
+*.env
+.env.*
+!.env.example
+backend/.env
+
+# Internal progress notes
+PROGRESS.md
+progress.md
+
+# Python cache & artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# File uploads & storage
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archives & Temporary files
+*.zip
+*.tar.gz
+*.log
