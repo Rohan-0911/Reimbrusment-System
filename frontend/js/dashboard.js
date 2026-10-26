@@ -43,7 +43,7 @@ const Dashboard = {
   getMockData() {
     const isAdmin = AppState.isAdmin();
     return {
-      total: { count: isAdmin ? 48 : 7, total: isAdmin ? 124500 : 18200 },
+      total: { count: isAdmin ? 48 : 7, total: isAdmin ? 72000 : 9500 },
       byStatus: [
         { status: 'approved', count: isAdmin ? 28 : 3, total: isAdmin ? 72000 : 9500 },
         { status: 'in_review', count: isAdmin ? 12 : 2, total: isAdmin ? 35000 : 5400 },
@@ -131,10 +131,10 @@ const Dashboard = {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
           </div>
-          <div class="stat-value">${sym}${((total?.total || 0) / 1000).toFixed(1)}k</div>
+          <div class="stat-value">${sym}${((statusMap.approved?.total ?? total?.total ?? 0) / 1000).toFixed(1)}k</div>
           <div class="stat-meta">
-            <span class="stat-trend stat-trend-up">Base</span>
-            <span>Total reimbursed value</span>
+            <span class="stat-trend stat-trend-up">Approved</span>
+            <span>Total approved spend</span>
           </div>
         </div>
       `;
@@ -224,7 +224,7 @@ const Dashboard = {
             <div class="spender-avatar">${UI.initials(s.name)}</div>
             <div class="spender-info">
               <div class="spender-name">${s.name}</div>
-              <div class="spender-count">${s.count} expenses</div>
+              <div class="spender-count">${s.count} approved claim${s.count !== 1 ? 's' : ''}</div>
             </div>
             <div class="spender-total">${sym}${(s.total / 1000).toFixed(1)}k</div>
           </div>

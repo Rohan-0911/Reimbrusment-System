@@ -302,6 +302,7 @@ const AdminStats = {
     const total = (expenseStats || []).reduce((s, e) => ({ count: s.count + e.count, total: s.total + e.total }), { count: 0, total: 0 });
     const approved = expenseStats?.find(e => e.status === 'approved');
     const inReview = expenseStats?.find(e => e.status === 'in_review');
+    const approvedTotal = approved?.total || 0;
 
     // KPI cards (Modern light analytics cards)
     const kpiEl = document.getElementById('admin-kpi-grid');
@@ -344,8 +345,8 @@ const AdminStats = {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
           </div>
-          <div class="metric-value">${sym}${(total.total / 1000).toFixed(0)}k</div>
-          <div class="metric-meta">Calculated in base currency</div>
+          <div class="metric-value">${sym}${(approvedTotal / 1000).toFixed(1)}k</div>
+          <div class="metric-meta">Approved company spend only</div>
         </div>
       `;
     }
@@ -388,7 +389,7 @@ const AdminStats = {
           <div class="spender-avatar">${UI.initials(s.name)}</div>
           <div class="spender-info">
             <div class="spender-name">${s.name}</div>
-            <div class="spender-count">${s.count} claims filed / ${s.role.toUpperCase()}</div>
+            <div class="spender-count">${s.count} approved claim${s.count !== 1 ? 's' : ''} / ${s.role.toUpperCase()}</div>
           </div>
           <div class="spender-total">${sym}${(s.total / 1000).toFixed(1)}k</div>
         </div>

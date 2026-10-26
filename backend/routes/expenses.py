@@ -95,8 +95,11 @@ def dashboard(user: dict = Depends(get_current_user)):
         where  = "e.company_id = %s AND e.submitted_by = %s"
         params = (company_id, user_id)
 
+    # Total claims count (all filed claims) and total approved spend amount
     total = fetch_one(
-        f"SELECT COUNT(*) AS count, COALESCE(SUM(amount),0) AS total FROM expenses e WHERE {where}",
+        f"SELECT COUNT(*) AS count, "
+        f"COALESCE(SUM(CASE WHEN e.status = 'approved' THEN e.amount ELSE 0 END), 0) AS total "
+        f"FROM expenses e WHERE {where}",
         params,
     )
 
@@ -107,10 +110,13 @@ def dashboard(user: dict = Depends(get_current_user)):
     )
 
     by_category = fetch_all(
-        f"SELECT ec.name, COUNT(*) AS count, COALESCE(SUM(e.amount),0) AS total "
+        f"SELECT ec.name, "
+        f"COUNT(CASE WHEN e.status = 'approved' THEN 1 END) AS count, "
+        f"COALESCE(SUM(CASE WHEN e.status = 'approved' THEN e.amount ELSE 0 END), 0) AS total "
         f"FROM expenses e "
         f"JOIN expense_categories ec ON e.category_id = ec.id "
-        f"WHERE {where} GROUP BY ec.name ORDER BY total DESC",
+        f"WHERE {where} AND e.status = 'approved' "
+        f"GROUP BY ec.name ORDER BY total DESC",
         params,
     )
 
@@ -124,13 +130,14 @@ def dashboard(user: dict = Depends(get_current_user)):
         params,
     )
 
-    # Top spenders (admin only)
+    # Top spenders (admin only) — ONLY include approved expenses
     top_spenders = []
     if role == "admin":
         top_spenders = fetch_all(
             "SELECT u.name, u.role, COUNT(*) AS count, COALESCE(SUM(e.amount),0) AS total "
             "FROM expenses e JOIN users u ON e.submitted_by = u.id "
-            "WHERE e.company_id = %s GROUP BY u.id ORDER BY total DESC LIMIT 5",
+            "WHERE e.company_id = %s AND e.status = 'approved' "
+            "GROUP BY u.id ORDER BY total DESC LIMIT 5",
             (company_id,),
         )
 

@@ -137,11 +137,12 @@ def company_stats(admin: dict = Depends(require_admin)):
         (company_id,),
     )
 
-    # Top 5 spenders
+    # Top 5 spenders — ONLY include approved expenses
     top_spenders = fetch_all(
         "SELECT u.name, u.role, COUNT(*) AS count, COALESCE(SUM(e.amount),0) AS total "
         "FROM expenses e JOIN users u ON e.submitted_by = u.id "
-        "WHERE e.company_id = %s GROUP BY u.id ORDER BY total DESC LIMIT 5",
+        "WHERE e.company_id = %s AND e.status = 'approved' "
+        "GROUP BY u.id ORDER BY total DESC LIMIT 5",
         (company_id,),
     )
 
