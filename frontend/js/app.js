@@ -98,6 +98,11 @@ const API = {
     list: () => API.get('/expenses'),
     get: (id) => API.get(`/expenses/${id}`),
     create: (formData) => API.post('/expenses', formData, true),
+    scanReceipt: (file) => {
+      const fd = new FormData();
+      fd.append('receipt', file);
+      return API.post('/expenses/scan-receipt', fd, true);
+    },
     dashboard: () => API.get('/expenses/dashboard'),
     categories: () => API.get('/expenses/categories'),
     convert: (amount, from, to) => API.get(`/expenses/convert?amount=${amount}&from=${from}&to=${to}`),
@@ -306,6 +311,30 @@ const UI = {
       cancelled: 'Cancelled'
     };
     return `<span class="badge badge-${status}">${labels[status] || status}</span>`;
+  },
+
+  // AI Authenticity Score & Status badge HTML
+  authenticityBadge(score, status) {
+    if (score === null || score === undefined || score === '') {
+      return `<span class="ai-score-pill ai-score-none"><small>NO SCAN</small></span>`;
+    }
+    const num = Math.round(Number(score));
+    const rawSt = (status || (num >= 80 ? 'GENUINE' : num >= 50 ? 'NEEDS_REVIEW' : 'SUSPICIOUS')).toUpperCase();
+    let cls = 'ai-score-genuine';
+    let icon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+    let label = 'Genuine';
+
+    if (rawSt === 'SUSPICIOUS' || num < 50) {
+      cls = 'ai-score-suspicious';
+      icon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      label = 'Suspicious';
+    } else if (rawSt === 'NEEDS_REVIEW' || num < 80) {
+      cls = 'ai-score-review';
+      icon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+      label = 'Review';
+    }
+
+    return `<span class="ai-score-pill ${cls}" title="Gemini AI Authenticity Score: ${num}% (${label})">${icon} ${num}% <small>${label}</small></span>`;
   },
 
   // Get initials from name

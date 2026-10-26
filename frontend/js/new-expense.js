@@ -1,5 +1,5 @@
 /* ============================================================
-   Reimbursement System: New Expense Submission
+   Reimbursement System: New Expense Submission (with Gemini AI Auto-Fill)
    ============================================================ */
 
 'use strict';
@@ -7,15 +7,24 @@
 const NewExpense = {
   categories: [],
   selectedFile: null,
+  aiData: null,
   _listenersAttached: false,
 
   async init() {
     UI.showPage('new-expense');
     this.selectedFile = null;
-    // Reset form
+    this.aiData = null;
+
+    // Reset form & UI states
     document.getElementById('new-expense-form')?.reset();
     document.getElementById('file-preview')?.classList.remove('visible');
     document.getElementById('amount-preview')?.classList.remove('visible');
+    
+    const scanLoading = document.getElementById('ai-scan-loading');
+    if (scanLoading) scanLoading.style.display = 'none';
+
+    const authCard = document.getElementById('ai-authenticity-card');
+    if (authCard) authCard.style.display = 'none';
 
     await this.loadCategories();
     this.bindCurrencyPreview();
@@ -131,8 +140,15 @@ const NewExpense = {
 
     removeBtn?.addEventListener('click', () => {
       this.selectedFile = null;
+      this.aiData = null;
       fileInput.value = '';
       preview?.classList.remove('visible');
+      
+      const scanLoading = document.getElementById('ai-scan-loading');
+      if (scanLoading) scanLoading.style.display = 'none';
+
+      const authCard = document.getElementById('ai-authenticity-card');
+      if (authCard) authCard.style.display = 'none';
     });
   },
 
@@ -165,7 +181,151 @@ const NewExpense = {
     }
 
     previewEl?.classList.add('visible');
-    Toast.show('Document voucher attached.', 'success');
+
+    // Trigger Gemini AI scanning for automatic extraction & fraud verification
+    this.triggerAiScan(file);
+  },
+
+  async triggerAiScan(file) {
+    const scanLoading = document.getElementById('ai-scan-loading');
+    const authCard = document.getElementById('ai-authenticity-card');
+
+    if (scanLoading) scanLoading.style.display = 'flex';
+    if (authCard) authCard.style.display = 'none';
+
+    try {
+      const result = await API.expenses.scanReceipt(file);
+      this.aiData = result;
+
+      // Auto-fill form fields
+      this.applyAiDataToForm(result);
+
+      // Render AI Authenticity preview card
+      this.renderAiAuthenticityCard(result);
+
+      Toast.show('✨ Gemini AI scanned receipt! Fields auto-filled (you can edit anytime).', 'success');
+    } catch (err) {
+      console.warn('[AI Scan] Scan failed or service unreachable:', err);
+      Toast.show('Receipt attached. You can manually fill or review the fields.', 'info');
+    } finally {
+      if (scanLoading) scanLoading.style.display = 'none';
+    }
+  },
+
+  applyAiDataToForm(ai) {
+    if (!ai) return;
+
+    // 1. Amount
+    const amountInput = document.getElementById('expense-amount');
+    if (amountInput && ai.amount) {
+      amountInput.value = ai.amount;
+      this.flashField(amountInput);
+    }
+
+    // 2. Currency
+    const currencySelect = document.getElementById('expense-currency');
+    if (currencySelect && ai.currency) {
+      const cur = ai.currency.toUpperCase();
+      const optionExists = Array.from(currencySelect.options).some(o => o.value === cur);
+      if (optionExists) {
+        currencySelect.value = cur;
+        this.flashField(currencySelect);
+      }
+    }
+
+    // 3. Date
+    const dateInput = document.getElementById('expense-date');
+    if (dateInput && ai.date) {
+      // Validate or standardize date YYYY-MM-DD
+      const parsedDate = new Date(ai.date);
+      if (!isNaN(parsedDate.getTime())) {
+        const yyyy = parsedDate.getFullYear();
+        const mm = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(parsedDate.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+        this.flashField(dateInput);
+      }
+    }
+
+    // 4. Description / Merchant
+    const descInput = document.getElementById('expense-description');
+    if (descInput) {
+      let desc = '';
+      if (ai.merchant_name && ai.description && ai.merchant_name !== ai.description) {
+        desc = `${ai.merchant_name} - ${ai.description}`;
+      } else if (ai.merchant_name) {
+        desc = ai.merchant_name;
+      } else if (ai.description) {
+        desc = ai.description;
+      }
+      if (desc) {
+        descInput.value = desc;
+        this.flashField(descInput);
+      }
+    }
+
+    // 5. Category (Fuzzy match suggested category)
+    const catSelect = document.getElementById('expense-category');
+    if (catSelect && ai.suggested_category && this.categories.length) {
+      const target = ai.suggested_category.toLowerCase();
+      const match = this.categories.find(c => {
+        const cname = c.name.toLowerCase();
+        return cname === target || cname.includes(target) || target.includes(cname);
+      });
+      if (match) {
+        catSelect.value = match.id;
+        this.flashField(catSelect);
+      }
+    }
+
+    // Trigger currency conversion calculation
+    const amountEl = document.getElementById('expense-amount');
+    if (amountEl && amountEl.value) {
+      amountEl.dispatchEvent(new Event('input'));
+    }
+  },
+
+  flashField(element) {
+    element.classList.remove('field-autofilled');
+    // Trigger reflow to restart animation
+    void element.offsetWidth;
+    element.classList.add('field-autofilled');
+  },
+
+  renderAiAuthenticityCard(ai) {
+    const card = document.getElementById('ai-authenticity-card');
+    const badgeEl = document.getElementById('ai-auth-score-badge');
+    const reasonEl = document.getElementById('ai-auth-reason');
+    const tagsEl = document.getElementById('ai-auth-meta-tags');
+
+    if (!card) return;
+
+    if (badgeEl) {
+      badgeEl.innerHTML = UI.authenticityBadge(ai.authenticity_score, ai.authenticity_status);
+    }
+
+    if (reasonEl) {
+      reasonEl.textContent = ai.authenticity_reason || 'Document structure and metadata verified successfully.';
+    }
+
+    if (tagsEl) {
+      const tags = [];
+      if (ai.merchant_name) {
+        tags.push(`<span class="ai-auth-tag">Vendor: <strong>${ai.merchant_name}</strong></span>`);
+      }
+      if (ai.invoice_or_tax_id) {
+        tags.push(`<span class="ai-auth-tag">Tax/Invoice: <strong>${ai.invoice_or_tax_id}</strong></span>`);
+      }
+      if (ai.suggested_category) {
+        tags.push(`<span class="ai-auth-tag">Category: <strong>${ai.suggested_category}</strong></span>`);
+      }
+      if (ai.tax_amount) {
+        tags.push(`<span class="ai-auth-tag">Tax: <strong>${ai.currency || ''} ${ai.tax_amount}</strong></span>`);
+      }
+      tagsEl.innerHTML = tags.join('');
+    }
+
+    card.style.display = 'block';
   },
 
   formatFileSize(bytes) {
@@ -221,12 +381,30 @@ const NewExpense = {
       formData.append('category_id', categoryId);
       formData.append('description', description);
       formData.append('expense_date', date);
+
       if (this.selectedFile) {
         formData.append('receipt', this.selectedFile);
       }
 
+      // If AI extracted data is available, attach authenticity scoring and OCR metadata
+      if (this.aiData) {
+        if (this.aiData.authenticity_score !== undefined && this.aiData.authenticity_score !== null) {
+          formData.append('ai_authenticity_score', this.aiData.authenticity_score);
+        }
+        if (this.aiData.authenticity_status) {
+          formData.append('ai_authenticity_status', this.aiData.authenticity_status);
+        }
+        if (this.aiData.authenticity_reason) {
+          formData.append('ai_authenticity_reason', this.aiData.authenticity_reason);
+        }
+        formData.append('ai_extracted_data', JSON.stringify(this.aiData));
+        if (this.aiData.ocr_text) {
+          formData.append('receipt_ocr_text', this.aiData.ocr_text);
+        }
+      }
+
       await API.expenses.create(formData);
-      Toast.show('Expense claim registered successfully.', 'success');
+      Toast.show('Expense claim registered successfully with Gemini audit record.', 'success');
       Router.navigate('my-expenses');
     } catch (err) {
       // Demo mode: simulate success

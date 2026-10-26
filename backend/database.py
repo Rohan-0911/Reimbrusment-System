@@ -170,6 +170,11 @@ def create_tables():
             receipt_path      VARCHAR(500),
             status            ENUM('pending','in_review','approved','rejected','cancelled')
                               NOT NULL DEFAULT 'in_review',
+            ai_authenticity_score  INT DEFAULT NULL,
+            ai_authenticity_status VARCHAR(50) DEFAULT NULL,
+            ai_authenticity_reason TEXT DEFAULT NULL,
+            ai_extracted_data      TEXT DEFAULT NULL,
+            receipt_ocr_text       TEXT DEFAULT NULL,
             created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at        DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (company_id)   REFERENCES companies(id),
@@ -216,6 +221,22 @@ def create_tables():
         for stmt in statements:
             cur.execute(stmt)
         conn.commit()
+
+        # Ensure new AI columns exist on existing databases
+        ai_columns = [
+            ("ai_authenticity_score", "INT DEFAULT NULL"),
+            ("ai_authenticity_status", "VARCHAR(50) DEFAULT NULL"),
+            ("ai_authenticity_reason", "TEXT DEFAULT NULL"),
+            ("ai_extracted_data", "TEXT DEFAULT NULL"),
+            ("receipt_ocr_text", "TEXT DEFAULT NULL"),
+        ]
+        for col_name, col_def in ai_columns:
+            try:
+                cur.execute(f"ALTER TABLE expenses ADD COLUMN {col_name} {col_def}")
+                conn.commit()
+            except Exception:
+                pass  # Already exists
+
         print(f"[OK] All MySQL tables ready in database '{os.getenv('DB_NAME', 'reimburseiq')}'.")
         return True
     except Exception as err:

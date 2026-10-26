@@ -36,14 +36,21 @@ The **Reimbursement System** streamlines corporate expense reporting, receipt ve
 
 ### 💰 Expense Submission & Lifecycle
 - **Comprehensive Claims**: Multi-field submissions including merchant name, category, transaction date, description, and currency selection.
-- **Receipt Attachment**: Multi-format receipt uploads (PNG, JPG, PDF) with receipt file preview and secure backend storage.
+- **Receipt Attachment**: Multi-format receipt uploads (PNG, JPG, WebP, PDF) with receipt file preview and secure backend storage.
 - **Currency Conversion**: Automatic live exchange rate calculation with graceful fallback support.
 - **Status Lifecycle**: Clear progression through `Pending`, `Approved`, and `Rejected` states with administrator rejection notes.
 
+### 🤖 Gemini AI Receipt Auto-Fill & Fraud Scoring
+- **Automated Bill Ingestion**: Uploading a receipt or bill triggers Google Gemini Vision AI to instantly parse and itemize the document.
+- **Smart Form Auto-Population**: Merchant name, claim amount, currency, invoice date, and business category are auto-detected and populated into the submission form.
+- **Full Employee Editability**: Employees retain full freedom to verify, override, and adjust any auto-filled details before final filing.
+- **Authenticity & Fraud Analysis**: Analyzes receipt formatting, tax/invoice registration numbers, subtotal mathematics, digital tampering artifacts, and font consistency.
+- **Dual-Sided Score Transparency**: Computes an Authenticity Score (0–100%) and categorizes the receipt as `GENUINE`, `NEEDS_REVIEW`, or `SUSPICIOUS`—visible in real-time to both submitters and administrative auditors.
+
 ### 📊 Dashboard & Financial Analytics
 - **KPI Metrics**: Real-time summary cards for total claimed, pending approvals, approved amounts, and month-over-month comparisons.
-- **Ledger & Filters**: Searchable, filterable expense ledger with date-range filters, category badges, and instant pagination.
-- **Audit Trails**: Individual expense inspection drawer/modal displaying full submission history, audit timeline, and attached receipt proofs.
+- **Ledger & Filters**: Searchable, filterable expense ledger with date-range filters, category badges, AI authenticity status pills, and instant pagination.
+- **Audit Trails**: Individual expense inspection drawer/modal displaying full submission history, Gemini AI forensic breakdown, risk factors, and attached receipt proofs.
 
 ### 👥 Team & Department Administration
 - **Employee Directory**: Manage team members, departmental assignments, and role permissions.
@@ -228,6 +235,7 @@ The frontend is built with pure HTML, CSS, and JavaScript, meaning **no build st
 | `SECRET_KEY` | Yes | *Long Secret* | Secret key for signing and verifying JWT authentication tokens. |
 | `FRONTEND_URL` | No | `http://localhost:5500` | Allowed origin for Cross-Origin Resource Sharing (CORS). |
 | `EXCHANGE_API_KEY` | No | *Empty* | Optional API key for `exchangerate-api.com`. Uses free fallback if empty. |
+| `GEMINI_API_KEY` | No | *Empty* | Google Gemini API key from [AI Studio](https://aistudio.google.com/app/apikey). Powers receipt parsing & fraud scoring (seamless heuristic fallback if omitted). |
 
 ---
 

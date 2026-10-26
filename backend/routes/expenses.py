@@ -13,6 +13,7 @@ import uuid
 import os
 import sys
 import shutil
+import json
 import httpx
 
 # Ensure backend root is on sys.path for direct imports
@@ -30,9 +31,33 @@ from dependencies import get_current_user
 
 router = APIRouter()
 
-# Where uploaded receipts are saved
+from gemini_service import analyze_receipt
+
+# ─── Where uploaded receipts are saved ─────────────────────────
 UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
+
+
+# ─── AI Receipt Scanner & Authenticity Evaluation ─────────────
+
+@router.post("/scan-receipt")
+async def scan_receipt(
+    receipt: UploadFile = File(...),
+    user: dict = Depends(get_current_user),
+):
+    """
+    AI-driven OCR and authenticity evaluation endpoint using Google Gemini API.
+    Extracts merchant, amount, currency, date, category and assesses if the receipt is genuine.
+    """
+    if not receipt or not receipt.filename:
+        raise HTTPException(status_code=400, detail="Receipt file is required")
+
+    file_bytes = await receipt.read()
+    if len(file_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Receipt exceeds maximum size of 10MB")
+
+    analysis = await analyze_receipt(file_bytes, receipt.content_type, receipt.filename)
+    return analysis
 
 
 # ─── Currency conversion helper ───────────────────────────────
@@ -204,16 +229,20 @@ def list_expenses(user: dict = Depends(get_current_user)):
 
 @router.post("", status_code=201)
 async def create_expense(
-    # Form fields (because we also accept a file)
-    amount:       str = Form(...),
-    currency:     str = Form(...),
-    category_id:  str = Form(...),
-    description:  str = Form(...),
-    expense_date: str = Form(...),
-    receipt:      Optional[UploadFile] = File(None),
+    amount:                 str = Form(...),
+    currency:               str = Form(...),
+    category_id:            str = Form(...),
+    description:            str = Form(...),
+    expense_date:           str = Form(...),
+    receipt:                Optional[UploadFile] = File(None),
+    ai_authenticity_score:  Optional[int] = Form(None),
+    ai_authenticity_status: Optional[str] = Form(None),
+    ai_authenticity_reason: Optional[str] = Form(None),
+    ai_extracted_data:      Optional[str] = Form(None),
+    receipt_ocr_text:       Optional[str] = Form(None),
     user: dict = Depends(get_current_user),
 ):
-    """Submit a new expense. Receipt upload is optional."""
+    """Submit a new expense with optional receipt and AI authenticity scoring."""
 
     company = fetch_one("SELECT * FROM companies WHERE id = %s", (user["company_id"],))
     if not company:
@@ -231,22 +260,39 @@ async def create_expense(
         ext          = os.path.splitext(receipt.filename)[1]
         filename     = f"{uuid.uuid4()}{ext}"
         file_path    = os.path.join(UPLOADS_DIR, filename)
+        file_bytes   = await receipt.read()
         with open(file_path, "wb") as f:
-            shutil.copyfileobj(receipt.file, f)
+            f.write(file_bytes)
         receipt_path = f"uploads/{filename}"
+
+        # If AI analysis was not passed from client-side scan, analyze automatically
+        if ai_authenticity_score is None:
+            try:
+                analysis = await analyze_receipt(file_bytes, receipt.content_type, receipt.filename)
+                ai_authenticity_score  = analysis.get("authenticity_score")
+                ai_authenticity_status = analysis.get("authenticity_status")
+                ai_authenticity_reason = analysis.get("authenticity_reason")
+                ai_extracted_data      = json.dumps(analysis, ensure_ascii=False)
+                receipt_ocr_text       = analysis.get("ocr_text")
+            except Exception as e:
+                print(f"[WARN] Auto AI scan on expense creation failed: {e}")
 
     # Insert the expense
     expense_id = str(uuid.uuid4())
     execute(
         """INSERT INTO expenses
            (id, company_id, submitted_by, amount, original_amount, original_currency,
-            base_currency, category_id, description, expense_date, receipt_path, status)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'in_review')""",
+            base_currency, category_id, description, expense_date, receipt_path, status,
+            ai_authenticity_score, ai_authenticity_status, ai_authenticity_reason,
+            ai_extracted_data, receipt_ocr_text)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'in_review',%s,%s,%s,%s,%s)""",
         (
             expense_id, user["company_id"], user["id"],
             base_amount, original_amount, from_currency,
             company["currency_code"], category_id, description, expense_date,
             receipt_path,
+            ai_authenticity_score, ai_authenticity_status, ai_authenticity_reason,
+            ai_extracted_data, receipt_ocr_text,
         ),
     )
 

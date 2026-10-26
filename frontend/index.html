@@ -416,6 +416,7 @@
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Date</th>
+                  <th>AI Authenticity</th>
                   <th>Receipt</th>
                 </tr>
               </thead>
@@ -473,6 +474,7 @@
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Date</th>
+                  <th>AI Authenticity</th>
                   <th>Receipt</th>
                 </tr>
               </thead>
@@ -491,18 +493,86 @@
           <div class="page-header" style="max-width:720px;margin:0 auto 24px">
             <div>
               <h1 class="page-title">Submit New Expense</h1>
-              <p class="page-subtitle">File receipt documentation and business categorization</p>
+              <p class="page-subtitle">File receipt documentation with instant Gemini AI auto-fill and fraud scoring</p>
             </div>
           </div>
 
           <div class="expense-form-card">
             <div class="expense-form-header">
               <h2>Expense Claim Details</h2>
-              <p>Fields marked with asterisk (*) are required for accounting compliance</p>
+              <p>Upload your receipt or bill to automatically extract and populate details. You can freely edit any field before submitting.</p>
             </div>
 
             <div class="expense-form-body">
               <form id="new-expense-form" novalidate>
+
+                <!-- Receipt Upload & Gemini AI Scanner (Top for instant auto-fill) -->
+                <div class="form-section">
+                  <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between">
+                    <span>Receipt Voucher & AI Smart Scan</span>
+                    <span class="ai-badge-header">✨ Gemini AI Powered</span>
+                  </div>
+
+                  <!-- AI Banner -->
+                  <div class="ai-scan-banner">
+                    <div class="ai-scan-banner-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                    </div>
+                    <div class="ai-scan-banner-text">
+                      <strong>Automatic Bill Extraction & Fraud Scoring:</strong>
+                      <span>Upload your voucher to auto-fill the amount, currency, category, date, and description. AI will score the receipt genuineness for you and your admin.</span>
+                    </div>
+                  </div>
+
+                  <div class="file-upload-area" id="file-drop-area">
+                    <input type="file" id="receipt-file" accept="image/jpeg,image/png,image/webp,application/pdf" />
+                    <div class="file-upload-icon-svg">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="file-upload-text">
+                      <span class="file-upload-highlight">Choose a receipt or bill</span> to auto-scan & fill
+                    </div>
+                    <div class="file-upload-hint">Accepted: JPEG, PNG, WebP, PDF up to 10MB</div>
+                  </div>
+
+                  <!-- Scanning Animation State -->
+                  <div class="ai-scan-loading" id="ai-scan-loading" style="display:none">
+                    <div class="ai-scan-spinner"></div>
+                    <div class="ai-scan-loading-content">
+                      <div class="ai-scan-loading-title">Gemini Vision AI is analyzing your receipt...</div>
+                      <div class="ai-scan-loading-desc">Extracting merchant, line items, transaction date, and verifying document authenticity.</div>
+                    </div>
+                  </div>
+
+                  <div class="file-preview" id="file-preview">
+                    <img id="file-preview-img" src="" alt="Receipt preview" class="file-preview-img"
+                      style="display:none" />
+                    <div class="file-preview-info">
+                      <div class="file-preview-name" id="file-preview-name">--</div>
+                      <div class="file-preview-size" id="file-preview-size">--</div>
+                    </div>
+                    <button type="button" class="file-preview-remove" id="file-remove-btn">Remove</button>
+                  </div>
+
+                  <!-- AI Authenticity & Auto-Fill Status Card -->
+                  <div class="ai-authenticity-card" id="ai-authenticity-card" style="display:none">
+                    <div class="ai-auth-header">
+                      <div class="ai-auth-title-row">
+                        <span class="ai-auth-sparkle">✨</span>
+                        <div class="ai-auth-title">Gemini AI Authenticity Assessment</div>
+                      </div>
+                      <div id="ai-auth-score-badge"></div>
+                    </div>
+                    <div class="ai-auth-body">
+                      <div class="ai-auth-reason" id="ai-auth-reason"></div>
+                      <div class="ai-auth-meta-tags" id="ai-auth-meta-tags"></div>
+                      <div class="ai-auth-note">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <span><strong>Editable:</strong> Form fields below have been auto-populated. Review and adjust any values as needed.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <!-- Amount & Currency -->
                 <div class="form-section">
@@ -544,31 +614,6 @@
                       placeholder="Itemized rationale (e.g. Client strategic lunch in Chicago with regional director)"
                       rows="3" required></textarea>
                     <div class="form-hint">Provide adequate detail to ensure swift administrative review.</div>
-                  </div>
-                </div>
-
-                <!-- Receipt Upload -->
-                <div class="form-section">
-                  <div class="form-section-title">Receipt Documentation</div>
-                  <div class="file-upload-area" id="file-drop-area">
-                    <input type="file" id="receipt-file" accept="image/jpeg,image/png,image/webp,application/pdf" />
-                    <div class="file-upload-icon-svg">
-                      <svg width="24" height="24" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/></svg>
-                    </div>
-                    <div class="file-upload-text">
-                      <span class="file-upload-highlight">Select voucher file</span> or drag and drop
-                    </div>
-                    <div class="file-upload-hint">Accepted: JPEG, PNG, WebP, PDF. Maximum file size: 10MB.</div>
-                  </div>
-
-                  <div class="file-preview" id="file-preview">
-                    <img id="file-preview-img" src="" alt="Receipt preview" class="file-preview-img"
-                      style="display:none" />
-                    <div class="file-preview-info">
-                      <div class="file-preview-name" id="file-preview-name">--</div>
-                      <div class="file-preview-size" id="file-preview-size">--</div>
-                    </div>
-                    <button type="button" class="file-preview-remove" id="file-remove-btn">Remove</button>
                   </div>
                 </div>
 

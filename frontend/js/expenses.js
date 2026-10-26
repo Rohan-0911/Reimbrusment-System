@@ -152,10 +152,13 @@ const Expenses = {
 
     if (!tbody) return;
 
+    const showSubmitter = this.mode === 'all';
+    const totalCols = showSubmitter ? 8 : 7;
+
     if (!this.filtered.length) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7">
+          <td colspan="${totalCols}">
             <div class="empty-state">
               <div class="empty-state-code">[NO-RECORDS]</div>
               <h3>No matching expense records</h3>
@@ -166,8 +169,6 @@ const Expenses = {
       `;
       return;
     }
-
-    const showSubmitter = this.mode === 'all';
 
     tbody.innerHTML = this.filtered.map(exp => `
       <tr onclick="ExpenseDetail.open('${exp.id}')" style="cursor:pointer">
@@ -185,6 +186,7 @@ const Expenses = {
         </td>
         <td>${UI.statusBadge(exp.status)}</td>
         <td class="expense-date">${UI.formatDate(exp.expense_date)}</td>
+        <td>${UI.authenticityBadge(exp.ai_authenticity_score, exp.ai_authenticity_status)}</td>
         <td>
           ${exp.has_receipt || exp.receipt_path 
             ? `<span class="expense-receipt-icon has-receipt"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Receipt</span>` 

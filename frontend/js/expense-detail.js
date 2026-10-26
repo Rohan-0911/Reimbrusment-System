@@ -194,6 +194,95 @@ const ExpenseDetail = {
             </div>
           </div>
 
+          <!-- AI Authenticity & Fraud Audit Card (Visible to Employee and Admin) -->
+          ${(() => {
+            const hasScore = expense.ai_authenticity_score !== null && expense.ai_authenticity_score !== undefined;
+            let extracted = {};
+            if (expense.ai_extracted_data) {
+              try {
+                extracted = typeof expense.ai_extracted_data === 'string' ? JSON.parse(expense.ai_extracted_data) : expense.ai_extracted_data;
+              } catch (_) {}
+            }
+
+            if (!hasScore && !expense.receipt_path) {
+              return `
+                <div class="card" style="background:#fafafa">
+                  <div class="section-header">
+                    <div>
+                      <span class="section-code">[AI-AUDIT]</span>
+                      <h3 class="section-title">AI Receipt Authenticity Verification</h3>
+                    </div>
+                  </div>
+                  <p style="font-size:0.8125rem;color:var(--text-muted);margin:0">No receipt file was attached to this expense claim. Authenticity scoring is only generated when a voucher or bill is uploaded.</p>
+                </div>
+              `;
+            }
+
+            const score = hasScore ? Math.round(Number(expense.ai_authenticity_score)) : null;
+            const statusRaw = (expense.ai_authenticity_status || (score !== null ? (score >= 80 ? 'GENUINE' : score >= 50 ? 'NEEDS_REVIEW' : 'SUSPICIOUS') : 'PENDING')).toUpperCase();
+            
+            const badgeClass = statusRaw === 'GENUINE' ? 'genuine' : statusRaw === 'SUSPICIOUS' ? 'suspicious' : 'review';
+            const statusTitle = statusRaw === 'GENUINE' 
+              ? 'Authentic & Validated Voucher' 
+              : statusRaw === 'SUSPICIOUS' 
+                ? 'Flagged as High Risk / Suspicious' 
+                : 'Needs Administrative Review';
+
+            const reason = expense.ai_authenticity_reason || extracted.authenticity_reason || 'AI evaluated receipt clarity, merchant indicators, tax metadata, and tampering signals.';
+            const riskFactors = Array.isArray(extracted.risk_factors) ? extracted.risk_factors : [];
+
+            return `
+              <div class="ai-audit-card">
+                <div class="ai-audit-header">
+                  <div class="ai-audit-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                    <span>Gemini AI Receipt Authenticity Audit</span>
+                  </div>
+                  <div>
+                    ${UI.authenticityBadge(expense.ai_authenticity_score, expense.ai_authenticity_status)}
+                  </div>
+                </div>
+
+                <div class="ai-audit-body">
+                  <div class="ai-score-gauge-box">
+                    <div class="ai-score-number-badge ${badgeClass}">
+                      <span>${score !== null ? score + '%' : '--'}</span>
+                      <small>${statusRaw.replace('_', ' ')}</small>
+                    </div>
+                    <div class="ai-score-details-text">
+                      <div class="ai-score-status-title">${statusTitle}</div>
+                      <div class="ai-score-explanation">${reason}</div>
+                      ${riskFactors.length ? `
+                        <div class="ai-risk-factors-list">
+                          ${riskFactors.map(rf => `<span class="ai-risk-tag"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${rf}</span>`).join('')}
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+
+                  <div class="ai-audit-meta-grid">
+                    <div>
+                      <div class="ai-audit-meta-item-label">Verified Vendor</div>
+                      <div class="ai-audit-meta-item-val">${extracted.merchant_name || 'Standard Vendor'}</div>
+                    </div>
+                    <div>
+                      <div class="ai-audit-meta-item-label">Tax / Invoice Ref</div>
+                      <div class="ai-audit-meta-item-val">${extracted.invoice_or_tax_id || 'Not Detected'}</div>
+                    </div>
+                    <div>
+                      <div class="ai-audit-meta-item-label">Extracted Voucher Sum</div>
+                      <div class="ai-audit-meta-item-val">${extracted.amount ? (extracted.currency || '') + ' ' + extracted.amount : 'Matched claim'}</div>
+                    </div>
+                    <div>
+                      <div class="ai-audit-meta-item-label">Audit Transparency</div>
+                      <div class="ai-audit-meta-item-val" style="color:#059669">Employee & Admin</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          })()}
+
           <!-- OCR text if available -->
           ${expense.receipt_ocr_text ? `
             <div class="card">
