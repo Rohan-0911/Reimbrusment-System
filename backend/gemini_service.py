@@ -8,6 +8,13 @@ import base64
 import re
 import httpx
 from datetime import date
+from dotenv import load_dotenv
+
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+load_dotenv(os.path.join(BACKEND_DIR, ".env"))
+load_dotenv()
 
 GEMINI_MODELS = [
     "gemini-1.5-flash",

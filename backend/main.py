@@ -19,6 +19,7 @@ if hasattr(sys.stderr, "reconfigure"):
 
 # Ensure backend directory is in sys.path so modules resolve from any working directory
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
@@ -27,7 +28,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-# Load environment variables from backend/.env or root .env
+# Load environment variables from project root .env or backend/.env
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 load_dotenv(os.path.join(BACKEND_DIR, ".env"))
 load_dotenv()
 

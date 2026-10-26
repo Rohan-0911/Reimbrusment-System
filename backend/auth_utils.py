@@ -12,6 +12,10 @@ from dotenv import load_dotenv
 import bcrypt
 from jose import jwt, JWTError
 
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+load_dotenv(os.path.join(BACKEND_DIR, ".env"))
 load_dotenv()
 
 # ─── Password hashing ─────────────────────────────────────────
