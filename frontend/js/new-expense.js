@@ -214,22 +214,37 @@ const NewExpense = {
 
   applyAiDataToForm(ai) {
     if (!ai) return;
+    console.log('[AI Auto-Fill] Applying extracted receipt data:', ai);
 
-    // 1. Amount
+    // 1. Amount: check all possible keys and clean any currency formatting
     const amountInput = document.getElementById('expense-amount');
-    if (amountInput && ai.amount) {
-      amountInput.value = ai.amount;
-      this.flashField(amountInput);
+    const rawAmount = ai.amount !== undefined && ai.amount !== null && ai.amount !== '' ? ai.amount :
+                      ai.total !== undefined && ai.total !== null && ai.total !== '' ? ai.total :
+                      ai.total_amount !== undefined && ai.total_amount !== null && ai.total_amount !== '' ? ai.total_amount :
+                      ai.grand_total !== undefined && ai.grand_total !== null && ai.grand_total !== '' ? ai.grand_total :
+                      ai.total_payable !== undefined && ai.total_payable !== null && ai.total_payable !== '' ? ai.total_payable :
+                      ai.payable_amount !== undefined && ai.payable_amount !== null && ai.payable_amount !== '' ? ai.payable_amount :
+                      ai.bill_amount !== undefined && ai.bill_amount !== null && ai.bill_amount !== '' ? ai.bill_amount : null;
+
+    if (amountInput && rawAmount !== null) {
+      let num = typeof rawAmount === 'number' ? rawAmount : parseFloat(String(rawAmount).replace(/[^0-9.]/g, ''));
+      if (!isNaN(num) && num > 0) {
+        amountInput.value = num;
+        this.flashField(amountInput);
+        amountInput.dispatchEvent(new Event('input', { bubbles: true }));
+        amountInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }
 
     // 2. Currency
     const currencySelect = document.getElementById('expense-currency');
     if (currencySelect && ai.currency) {
-      const cur = ai.currency.toUpperCase();
+      const cur = ai.currency.toUpperCase().trim();
       const optionExists = Array.from(currencySelect.options).some(o => o.value === cur);
       if (optionExists) {
         currencySelect.value = cur;
         this.flashField(currencySelect);
+        currencySelect.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
 
@@ -244,6 +259,7 @@ const NewExpense = {
         const dd = String(parsedDate.getDate()).padStart(2, '0');
         dateInput.value = `${yyyy}-${mm}-${dd}`;
         this.flashField(dateInput);
+        dateInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }
 
@@ -261,6 +277,7 @@ const NewExpense = {
       if (desc) {
         descInput.value = desc;
         this.flashField(descInput);
+        descInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }
 
@@ -275,13 +292,13 @@ const NewExpense = {
       if (match) {
         catSelect.value = match.id;
         this.flashField(catSelect);
+        catSelect.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
 
-    // Trigger currency conversion calculation
-    const amountEl = document.getElementById('expense-amount');
-    if (amountEl && amountEl.value) {
-      amountEl.dispatchEvent(new Event('input'));
+    // Force currency preview recalculation
+    if (amountInput && amountInput.value) {
+      amountInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
   },
 

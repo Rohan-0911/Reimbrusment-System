@@ -17,9 +17,12 @@ load_dotenv(os.path.join(BACKEND_DIR, ".env"))
 load_dotenv()
 
 GEMINI_MODELS = [
-    "gemini-1.5-flash",
-    "gemini-2.0-flash",
-    "gemini-2.5-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-3.7-flash",
+    "gemini-3.8-flash",
+    "gemini-flash-latest",
 ]
 
 SYSTEM_PROMPT = """You are an expert financial forensic auditor and receipt verification AI for an enterprise reimbursement ledger system.
@@ -29,7 +32,7 @@ Extract the financial details and perform a thorough forensic authenticity asses
 
 Respond with a JSON object adhering to this exact schema:
 {
-  "merchant_name": "Name of the merchant/vendor/service (e.g. Starbucks, Uber, IndiGo, Croma)",
+  "merchant_name": "Name of the merchant/vendor/service (e.g. Starbucks, Uber, IndiGo, Croma, Hotel)",
   "description": "Itemized business description of the purchase (e.g. Client Dinner, Airport Cab, Office Equipment)",
   "amount": 1250.00,
   "currency": "INR",
@@ -43,17 +46,18 @@ Respond with a JSON object adhering to this exact schema:
   "risk_factors": ["List of specific forensic observations or integrity indicators"]
 }
 
-Guidelines for authenticity_score (0 to 100):
-- 85 to 100: GENUINE — High resolution, standard commercial invoice layout, consistent print typography, matching tax mathematics, valid vendor address or tax ID.
-- 60 to 84: NEEDS_REVIEW — Low resolution, missing tax registration, handwritten elements, incomplete merchant info, or borderline formatting.
-- 0 to 59: SUSPICIOUS — Evidence of digital editing/tampering, mismatched fonts, mathematical errors in totals, duplicate/fabricated template patterns.
+CRITICAL INSTRUCTIONS FOR AMOUNT EXTRACTION:
+1. "amount": MUST be the final grand total / payable amount as a positive float number without currency symbols (e.g. 1450.50). Always extract the final total amount including all taxes and charges.
+2. "currency": 3-letter currency code (e.g. INR, USD, EUR, GBP, AED).
+3. "date": ISO format YYYY-MM-DD.
+4. If multiple amounts exist on the receipt (subtotals, tax lines, service charges), ALWAYS assign the final total / net payable sum to "amount".
 """
 
 
 async def analyze_receipt(file_bytes: bytes, mime_type: str, filename: str = "") -> dict:
     """
     Send receipt image to Google Gemini API for OCR auto-fill and genuineness scoring.
-    Falls back gracefully to intelligent local heuristics if GEMINI_API_KEY is not configured.
+    Falls back gracefully to intelligent local heuristics if GEMINI_API_KEY is not configured or all models fail.
     """
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
 
@@ -98,26 +102,30 @@ async def analyze_receipt(file_bytes: bytes, mime_type: str, filename: str = "")
 
             for model_name in GEMINI_MODELS:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-                async with httpx.AsyncClient(timeout=35.0) as client:
-                    resp = await client.post(url, json=payload)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        candidates = data.get("candidates", [])
-                        if candidates:
-                            text_part = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                            parsed = _clean_and_parse_json(text_part)
-                            if parsed:
-                                parsed["ai_powered_by"] = f"Google Gemini ({model_name})"
-                                return _sanitize_parsed_receipt(parsed)
-                    elif resp.status_code == 404:
-                        continue  # Try next model in list
-                    else:
-                        print(f"[WARN] Gemini API returned {resp.status_code}: {resp.text}")
-                        break
+                try:
+                    async with httpx.AsyncClient(timeout=35.0) as client:
+                        resp = await client.post(url, json=payload)
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            candidates = data.get("candidates", [])
+                            if candidates:
+                                text_part = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                                parsed = _clean_and_parse_json(text_part)
+                                if parsed:
+                                    parsed["ai_powered_by"] = f"Google Gemini ({model_name})"
+                                    res_sanitized = _sanitize_parsed_receipt(parsed)
+                                    print(f"[Gemini OCR] Successfully extracted from {model_name}: amount={res_sanitized.get('amount')}, merchant={res_sanitized.get('merchant_name')}")
+                                    return res_sanitized
+                        else:
+                            print(f"[WARN] Gemini model {model_name} returned {resp.status_code}: {resp.text[:100]}. Trying next model...")
+                            continue
+                except Exception as model_err:
+                    print(f"[WARN] Error with model {model_name}: {model_err}. Trying next model...")
+                    continue
         except Exception as e:
             print(f"[WARN] Gemini API error: {e}. Falling back to heuristic assessment.")
 
-    # Fallback heuristic if API key is absent or API returned error
+    # Fallback heuristic if API key is absent or all API models failed
     return _generate_heuristic_assessment(filename, len(file_bytes), mime_type)
 
 
@@ -141,17 +149,110 @@ def _clean_and_parse_json(raw_text: str) -> dict:
     return {}
 
 
+def _extract_amount(data: dict) -> float:
+    """
+    Robustly extract the total numeric amount from various possible keys and formats.
+    Handles currency symbols, comma separators, and nested item totals.
+    """
+    # 1. Check all common key aliases
+    aliases = [
+        "amount", "total", "total_amount", "grand_total", "total_payable",
+        "net_amount", "final_amount", "bill_amount", "payable_amount", 
+        "balance_due", "invoice_total", "charge", "sum"
+    ]
+    for key in aliases:
+        val = data.get(key)
+        if val is not None:
+            if isinstance(val, (int, float)):
+                fval = float(val)
+                if fval > 0:
+                    return round(fval, 2)
+            val_str = str(val).strip()
+            if val_str:
+                cleaned = re.sub(r"[^\d.,]", "", val_str)
+                if "," in cleaned and "." in cleaned:
+                    cleaned = cleaned.replace(",", "")
+                elif "," in cleaned and "." not in cleaned:
+                    parts = cleaned.split(",")
+                    if len(parts) == 2 and len(parts[1]) == 2:
+                        cleaned = parts[0] + "." + parts[1]
+                    else:
+                        cleaned = cleaned.replace(",", "")
+                m = re.search(r"\d+(?:\.\d+)?", cleaned)
+                if m:
+                    parsed_num = float(m.group(0))
+                    if parsed_num > 0:
+                        return round(parsed_num, 2)
+
+    # 2. Check line items total
+    items = data.get("items") or data.get("line_items") or []
+    if isinstance(items, list) and items:
+        item_sum = 0.0
+        for item in items:
+            if isinstance(item, dict):
+                p = item.get("price") or item.get("amount") or item.get("total")
+                if p is not None:
+                    try:
+                        p_cleaned = re.sub(r"[^\d.]", "", str(p))
+                        if p_cleaned:
+                            item_sum += float(p_cleaned)
+                    except Exception:
+                        pass
+        if item_sum > 0:
+            return round(item_sum, 2)
+
+    # 3. Fallback: Search in OCR text for explicit total patterns
+    ocr = str(data.get("ocr_text") or "")
+    if ocr:
+        matches = re.findall(r"(?:total|amount|payable|grand\s*total|net)\s*[:=-]?\s*(?:inr|rs\.?|₹|\$|€|£)?\s*([\d,]+\.?\d*)", ocr, re.IGNORECASE)
+        if matches:
+            for cand in reversed(matches):
+                cand_clean = cand.replace(",", "").strip()
+                try:
+                    fval = float(cand_clean)
+                    if fval > 0:
+                        return round(fval, 2)
+                except Exception:
+                    pass
+
+    return 0.0
+
+
 def _sanitize_parsed_receipt(data: dict) -> dict:
-    """Ensure all required fields are typed and valid."""
+    """Ensure all required fields are typed, validated, and normalized."""
     # Amount
-    try:
-        amount = float(data.get("amount") or 0.0)
-    except (ValueError, TypeError):
-        amount = 0.0
+    amount = _extract_amount(data)
+
+    # Merchant Name
+    merchant = (
+        data.get("merchant_name") or 
+        data.get("store_name") or 
+        data.get("vendor_name") or 
+        data.get("vendor") or 
+        data.get("merchant") or 
+        data.get("store") or 
+        "Vendor / Merchant"
+    )
+
+    # Description
+    desc = data.get("description")
+    if not desc:
+        items = data.get("items") or data.get("line_items")
+        if isinstance(items, list) and items:
+            names = []
+            for it in items:
+                if isinstance(it, dict) and it.get("name"):
+                    names.append(str(it["name"]))
+                elif isinstance(it, str):
+                    names.append(it)
+            if names:
+                desc = ", ".join(names[:4])
+    if not desc:
+        desc = f"Expense receipt claim ({merchant})"
 
     # Currency
     currency = str(data.get("currency") or "INR").upper().strip()
-    if len(currency) > 5:
+    if len(currency) > 5 or not re.match(r"^[A-Z]{3}$", currency):
         currency = "INR"
 
     # Date
@@ -179,14 +280,24 @@ def _sanitize_parsed_receipt(data: dict) -> dict:
     # Category suggestion
     category = str(data.get("suggested_category") or "Miscellaneous").strip()
 
+    # Invoice / Tax ID
+    tax_id = (
+        data.get("invoice_or_tax_id") or 
+        data.get("gstin") or 
+        data.get("invoice_number") or 
+        data.get("invoice_id") or 
+        data.get("tax_id") or 
+        data.get("vat_number")
+    )
+
     return {
-        "merchant_name": data.get("merchant_name") or "Vendor / Merchant",
-        "description": data.get("description") or "Commercial receipt voucher",
+        "merchant_name": merchant,
+        "description": desc,
         "amount": round(amount, 2),
         "currency": currency,
         "date": tx_date,
         "suggested_category": category,
-        "invoice_or_tax_id": data.get("invoice_or_tax_id"),
+        "invoice_or_tax_id": tax_id,
         "ocr_text": data.get("ocr_text") or "",
         "authenticity_score": score,
         "authenticity_status": status,
