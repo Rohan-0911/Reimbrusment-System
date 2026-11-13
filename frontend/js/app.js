@@ -339,17 +339,17 @@ const UI = {
 
   // Status badge HTML
   statusBadge(status, utr = null) {
+    const normalizedStatus = (status === 'in_review') ? 'pending' : status;
     const labels = {
       approved: 'Approved',
       paid: 'Reimbursed',
       rejected: 'Rejected',
-      pending: 'Pending',
-      in_review: 'In Review',
+      pending: 'Pending Approval',
       cancelled: 'Cancelled'
     };
-    const titleAttr = (status === 'paid' && utr) ? ` title="Disbursed via Bank UTR: ${utr}"` : '';
-    const icon = status === 'paid' ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>' : '';
-    return `<span class="badge badge-${status}"${titleAttr}>${icon}${labels[status] || status}</span>`;
+    const titleAttr = (normalizedStatus === 'paid' && utr) ? ` title="Disbursed via Bank UTR: ${utr}"` : '';
+    const icon = normalizedStatus === 'paid' ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>' : '';
+    return `<span class="badge badge-${normalizedStatus}"${titleAttr}>${icon}${labels[normalizedStatus] || normalizedStatus}</span>`;
   },
 
   // AI Authenticity Score & Status badge HTML

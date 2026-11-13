@@ -475,7 +475,7 @@ async def create_expense(
             ai_authenticity_score, ai_authenticity_status, ai_authenticity_reason,
             ai_extracted_data, receipt_ocr_text, receipt_hash, invoice_or_tax_id,
             is_duplicate, duplicate_of, payout_status)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'in_review',%s,%s,%s,%s,%s,%s,%s,%s,%s,'unpaid')""",
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s,%s,%s,%s,%s,%s,%s,%s,'unpaid')""",
         (
             expense_id, user["company_id"], user["id"],
             base_amount, original_amount, from_currency,

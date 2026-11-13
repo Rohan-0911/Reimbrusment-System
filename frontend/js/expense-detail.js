@@ -34,7 +34,7 @@ const ExpenseDetail = {
         original_currency: AppState.company?.currency_code || 'INR',
         base_currency: AppState.company?.currency_code || 'INR',
         category_name: 'Travel',
-        status: 'in_review',
+        status: 'pending',
         expense_date: '2026-09-28',
         created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
         submitter_name: AppState.user?.name || 'Demo User',
@@ -81,7 +81,7 @@ const ExpenseDetail = {
         return i < currentStep ? 'done' : (i === currentStep ? 'rejected' : 'pending');
       }
       if (i < currentStep) return 'done';
-      if (i === currentStep && expStatus === 'in_review') return 'current';
+      if (i === currentStep && expStatus === 'pending') return 'current';
       return 'pending';
     }
 
@@ -105,8 +105,8 @@ const ExpenseDetail = {
             <div class="timeline-step">${step.label}</div>
             <div class="timeline-meta">
               ${status === 'done' ? 'Completed review' :
-          status === 'current' ? 'Under review' :
-            status === 'rejected' ? 'Rejected at this stage' : 'Pending review'}
+          status === 'current' ? 'Pending admin approval' :
+            status === 'rejected' ? 'Rejected at this stage' : 'Pending approval'}
               ${stepVotes.length ? ' • ' + approveCount + ' approved, ' + rejectCount + ' rejected' : ''}
             </div>
             ${stepVotes.map(v => `
@@ -407,8 +407,8 @@ const ExpenseDetail = {
             </div>
           `}
 
-          <!-- Admin Actions (if admin and status is pending/in_review) -->
-          ${AppState.isAdmin() && (expense.status === 'in_review' || expense.status === 'pending') ? `
+          <!-- Admin Actions (if admin and status is pending) -->
+          ${AppState.isAdmin() && expense.status === 'pending' ? `
             <div class="card" style="border:1px solid #bfdbfe;background:#eff6ff">
               <h3 style="font-size:0.9375rem;font-weight:700;color:#1e40af;margin-bottom:4px">Administrative Audit</h3>
               <p style="font-size:0.8125rem;color:#3b82f6;margin-bottom:12px">Record your approval or rejection decision.</p>

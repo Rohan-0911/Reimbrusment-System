@@ -172,8 +172,8 @@ def create_tables():
             description       TEXT NOT NULL,
             expense_date      DATE NOT NULL,
             receipt_path      VARCHAR(500),
-            status            ENUM('pending','in_review','approved','rejected','cancelled','paid')
-                              NOT NULL DEFAULT 'in_review',
+            status            ENUM('pending','approved','rejected','cancelled','paid')
+                              NOT NULL DEFAULT 'pending',
             ai_authenticity_score  INT DEFAULT NULL,
             ai_authenticity_status VARCHAR(50) DEFAULT NULL,
             ai_authenticity_reason TEXT DEFAULT NULL,
@@ -259,9 +259,16 @@ def create_tables():
             except Exception:
                 pass  # Already exists
 
-        # Ensure status enum includes 'paid'
+        # Migrate any 'in_review' records to 'pending'
         try:
-            cur.execute("ALTER TABLE expenses MODIFY COLUMN status ENUM('pending','in_review','approved','rejected','cancelled','paid') NOT NULL DEFAULT 'in_review'")
+            cur.execute("UPDATE expenses SET status = 'pending' WHERE status = 'in_review'")
+            conn.commit()
+        except Exception:
+            pass
+
+        # Ensure status enum has 'pending' as default and includes 'paid' without 'in_review'
+        try:
+            cur.execute("ALTER TABLE expenses MODIFY COLUMN status ENUM('pending','approved','rejected','cancelled','paid') NOT NULL DEFAULT 'pending'")
             conn.commit()
         except Exception:
             pass

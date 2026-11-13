@@ -65,7 +65,7 @@ const Expenses = {
 
   getMockExpenses() {
     const cats = ['Travel', 'Accommodation', 'Meals & Entertainment', 'Office Supplies', 'Software & Subscriptions'];
-    const statuses = ['paid', 'approved', 'rejected', 'in_review', 'pending'];
+    const statuses = ['paid', 'approved', 'rejected', 'pending'];
     const names = ['Alice Johnson', 'Bob Williams', 'Jane Smith', AppState.user?.name || 'You'];
 
     return Array.from({ length: 15 }, (_, i) => {

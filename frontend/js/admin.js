@@ -283,8 +283,7 @@ const AdminStats = {
       expenseStats: [
         { status: 'paid', count: 18, total: 48000 },
         { status: 'approved', count: 10, total: 24000 },
-        { status: 'in_review', count: 12, total: 35000 },
-        { status: 'pending', count: 5, total: 10000 },
+        { status: 'pending', count: 17, total: 45000 },
         { status: 'rejected', count: 3, total: 7500 },
       ],
       topSpenders: [
@@ -355,12 +354,11 @@ const AdminStats = {
     const statusColors = { 
       paid: '#059669',
       approved: '#10b981', 
-      in_review: '#3b82f6', 
       pending: '#f59e0b', 
       rejected: '#ef4444' 
     };
 
-    Charts.donut('admin-status-donut', (expenseStats || []).map(s => ({
+    Charts.donut('admin-status-donut', (expenseStats || []).filter(s => s.status !== 'in_review').map(s => ({
       value: s.count,
       color: statusColors[s.status] || '#64748b'
     })), { size: 160, thickness: 22 });
@@ -370,11 +368,13 @@ const AdminStats = {
 
     const adminLegendEl = document.getElementById('admin-status-legend');
     if (adminLegendEl) {
-      adminLegendEl.innerHTML = (expenseStats || []).map(s => `
+      adminLegendEl.innerHTML = (expenseStats || [])
+        .filter(s => s.status !== 'in_review')
+        .map(s => `
         <div class="legend-item">
           <span class="legend-label">
             <span class="legend-dot" style="background:${statusColors[s.status] || '#141618'}"></span>
-            ${s.status.replace('_', ' ').toUpperCase()}
+            ${s.status === 'pending' ? 'PENDING APPROVAL' : s.status.replace('_', ' ').toUpperCase()}
           </span>
           <span class="legend-value">${sym}${(s.total / 1000).toFixed(0)}k</span>
         </div>

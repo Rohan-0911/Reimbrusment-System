@@ -47,8 +47,7 @@ const Dashboard = {
       byStatus: [
         { status: 'paid', count: isAdmin ? 18 : 2, total: isAdmin ? 48000 : 6200 },
         { status: 'approved', count: isAdmin ? 10 : 1, total: isAdmin ? 24000 : 3300 },
-        { status: 'in_review', count: isAdmin ? 12 : 2, total: isAdmin ? 35000 : 5400 },
-        { status: 'pending', count: isAdmin ? 5 : 1, total: isAdmin ? 10000 : 2100 },
+        { status: 'pending', count: isAdmin ? 17 : 3, total: isAdmin ? 45000 : 7500 },
         { status: 'rejected', count: isAdmin ? 3 : 1, total: isAdmin ? 7500 : 1200 },
       ],
       byCategory: [
@@ -59,7 +58,7 @@ const Dashboard = {
         { name: 'Software & Subscriptions', count: isAdmin ? 8 : 0, total: isAdmin ? 17500 : 600 },
       ],
       recent: [
-        { id: 'demo1', description: 'Q4 Conference Travel', amount: 4200, status: 'in_review', category_name: 'Travel', expense_date: '2026-09-28', submitter_name: AppState.user?.name || 'Demo User' },
+        { id: 'demo1', description: 'Q4 Conference Travel', amount: 4200, status: 'pending', category_name: 'Travel', expense_date: '2026-09-28', submitter_name: AppState.user?.name || 'Demo User' },
         { id: 'demo2', description: 'Team Dinner', amount: 680, status: 'approved', category_name: 'Meals & Entertainment', expense_date: '2026-09-25', submitter_name: AppState.user?.name || 'Demo User' },
         { id: 'demo3', description: 'Hotel: NYC', amount: 1850, status: 'approved', category_name: 'Accommodation', expense_date: '2026-09-20', submitter_name: 'Jane Smith' },
         { id: 'demo4', description: 'Office Supplies', amount: 320, status: 'pending', category_name: 'Office Supplies', expense_date: '2026-09-18', submitter_name: AppState.user?.name || 'Demo User' },
@@ -117,15 +116,15 @@ const Dashboard = {
         </div>
         <div class="stat-card">
           <div class="stat-header">
-            <span class="stat-label">Under Review</span>
+            <span class="stat-label">Pending Approval</span>
             <div class="stat-icon-wrap stat-icon-amber">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
           </div>
-          <div class="stat-value">${(statusMap.in_review?.count || 0) + (statusMap.pending?.count || 0)}</div>
+          <div class="stat-value">${(statusMap.pending?.count || 0) + (statusMap.in_review?.count || 0)}</div>
           <div class="stat-meta">
             <span class="stat-trend stat-trend-neutral">Pending</span>
-            <span>Awaiting determination</span>
+            <span>Awaiting admin approval</span>
           </div>
         </div>
         <div class="stat-card">
@@ -148,26 +147,29 @@ const Dashboard = {
     const statusColors = {
       paid: '#059669',         // Deep emerald for reimbursed
       approved: '#10b981',     // Vibrant emerald
-      in_review: '#3b82f6',    // Vibrant blue
-      pending: '#f59e0b',      // Amber
+      pending: '#f59e0b',      // Amber for pending approval
       rejected: '#ef4444',     // Rose
     };
 
-    const donutSegments = (byStatus || []).map(s => ({
-      value: s.count,
-      color: statusColors[s.status] || '#64748b',
-      label: s.status
-    }));
+    const donutSegments = (byStatus || [])
+      .filter(s => s.status !== 'in_review')
+      .map(s => ({
+        value: s.count,
+        color: statusColors[s.status] || '#64748b',
+        label: s.status === 'pending' ? 'Pending Approval' : s.status
+      }));
 
     Charts.donut('donut-status', donutSegments, { size: 160, thickness: 22 });
 
     const legendEl = document.getElementById('status-legend');
     if (legendEl) {
-      legendEl.innerHTML = (byStatus || []).map(s => `
+      legendEl.innerHTML = (byStatus || [])
+        .filter(s => s.status !== 'in_review')
+        .map(s => `
         <div class="legend-item">
           <span class="legend-label">
             <span class="legend-dot" style="background:${statusColors[s.status] || '#64748b'}"></span>
-            ${s.status.replace('_', ' ')}
+            ${s.status === 'pending' ? 'Pending Approval' : s.status.replace('_', ' ')}
           </span>
           <span class="legend-value">${s.count}</span>
         </div>
