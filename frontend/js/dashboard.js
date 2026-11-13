@@ -206,12 +206,15 @@ const Dashboard = {
           <tr onclick="Router.navigate('expense-detail', { id: '${exp.id}' })" style="cursor:pointer">
             <td>
               <div style="font-weight:600;font-size:0.875rem">${exp.description}</div>
-              <div style="font-size:0.75rem;color:var(--text-muted)">${exp.submitter_name}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted)">${exp.submitter_name} • Incurred ${UI.formatDate(exp.expense_date)}</div>
             </td>
             <td><span class="expense-category-tag">${exp.category_name}</span></td>
             <td class="expense-amount">${UI.formatCurrency(exp.amount, AppState.company?.currency_code, sym)}</td>
             <td>${UI.statusBadge(exp.status, exp.utr_number)}</td>
-            <td class="expense-date">${UI.formatDate(exp.expense_date)}</td>
+            <td>
+              <div class="expense-date" style="font-weight:600">${UI.formatDate(exp.created_at || exp.expense_date)}</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">${UI.relativeTime(exp.created_at)}</div>
+            </td>
           </tr>
         `).join('');
       }

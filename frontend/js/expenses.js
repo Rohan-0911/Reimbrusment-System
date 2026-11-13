@@ -13,7 +13,7 @@ const Expenses = {
     search: '',
     status: '',
     category: '',
-    sortBy: 'date_desc'
+    sortBy: 'submission_desc'
   },
 
   async init(mode = 'my') {
@@ -28,12 +28,14 @@ const Expenses = {
   },
 
   resetFilters() {
-    this.filters = { search: '', status: '', sortBy: 'date_desc', category: '' };
-    const fields = ['expense-search', 'expense-filter-status', 'expense-sort'];
-    fields.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
+    this.filters = { search: '', status: '', sortBy: 'submission_desc', category: '' };
+    const pageId = this.mode === 'all' ? 'all-expenses' : 'my-expenses';
+    const searchEl = document.getElementById(`${pageId}-search`);
+    if (searchEl) searchEl.value = '';
+    const statusEl = document.getElementById(`${pageId}-status`);
+    if (statusEl) statusEl.value = '';
+    const sortEl = document.getElementById(`${pageId}-sort`);
+    if (sortEl) sortEl.value = 'submission_desc';
   },
 
   renderLoading(pageId) {
@@ -188,14 +190,30 @@ const Expenses = {
       list = list.filter(e => e.status === this.filters.status);
     }
 
-    if (this.filters.sortBy === 'date_desc') {
-      list.sort((a, b) => new Date(b.expense_date) - new Date(a.expense_date));
-    } else if (this.filters.sortBy === 'date_asc') {
-      list.sort((a, b) => new Date(a.expense_date) - new Date(b.expense_date));
+    const getSubmissionTime = (e) => {
+      const d = e.created_at || e.expense_date;
+      return d ? new Date(d).getTime() : 0;
+    };
+    const getIncurredTime = (e) => {
+      const d = e.expense_date || e.created_at;
+      return d ? new Date(d).getTime() : 0;
+    };
+
+    if (this.filters.sortBy === 'submission_desc' || this.filters.sortBy === 'date_desc') {
+      list.sort((a, b) => getSubmissionTime(b) - getSubmissionTime(a));
+    } else if (this.filters.sortBy === 'submission_asc' || this.filters.sortBy === 'date_asc') {
+      list.sort((a, b) => getSubmissionTime(a) - getSubmissionTime(b));
+    } else if (this.filters.sortBy === 'incurred_desc' || this.filters.sortBy === 'expense_date_desc') {
+      list.sort((a, b) => getIncurredTime(b) - getIncurredTime(a));
+    } else if (this.filters.sortBy === 'incurred_asc' || this.filters.sortBy === 'expense_date_asc') {
+      list.sort((a, b) => getIncurredTime(a) - getIncurredTime(b));
     } else if (this.filters.sortBy === 'amount_desc') {
-      list.sort((a, b) => b.amount - a.amount);
+      list.sort((a, b) => (b.amount || 0) - (a.amount || 0));
     } else if (this.filters.sortBy === 'amount_asc') {
-      list.sort((a, b) => a.amount - b.amount);
+      list.sort((a, b) => (a.amount || 0) - (b.amount || 0));
+    } else {
+      // Default: sort by date of expense submission
+      list.sort((a, b) => getSubmissionTime(b) - getSubmissionTime(a));
     }
 
     this.filtered = list;
@@ -235,7 +253,7 @@ const Expenses = {
       <tr onclick="ExpenseDetail.open('${exp.id}')" style="cursor:pointer">
         <td>
           <div style="font-weight:600;font-size:0.875rem">${exp.description}</div>
-          <div style="font-size:0.75rem;font-family:var(--font-mono);color:var(--text-muted)">${UI.relativeTime(exp.created_at)}</div>
+          <div style="font-size:0.75rem;font-family:var(--font-mono);color:var(--text-muted)">Incurred: ${UI.formatDate(exp.expense_date)}</div>
           ${exp.is_duplicate || exp.duplicate_of ? `<span class="badge-duplicate" title="Conflicting duplicate receipt detected">DUPLICATE</span>` : ''}
         </td>
         ${showSubmitter ? `<td><div style="font-size:0.875rem">${exp.submitter_name || 'N/A'}</div></td>` : ''}
@@ -247,7 +265,10 @@ const Expenses = {
         : ''}
         </td>
         <td>${UI.statusBadge(exp.status, exp.utr_number)}</td>
-        <td class="expense-date">${UI.formatDate(exp.expense_date)}</td>
+        <td>
+          <div class="expense-date" style="font-weight:600">${UI.formatDate(exp.created_at || exp.expense_date)}</div>
+          <div style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text-muted)">${UI.relativeTime(exp.created_at)}</div>
+        </td>
         <td>${UI.authenticityBadge(exp.ai_authenticity_score, exp.ai_authenticity_status)}</td>
         <td>
           ${exp.has_receipt || exp.receipt_path 
