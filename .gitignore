@@ -50,3 +50,8 @@ desktop.ini
 *.zip
 *.tar.gz
 *.log
+
+# SQL Documentation & Generated PDFs
+*.pdf
+SQL_Queries_Reference.pdf
+sql_queries.pdf
