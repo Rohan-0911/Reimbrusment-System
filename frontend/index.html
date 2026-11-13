@@ -377,10 +377,16 @@
               <h1 class="page-title">My Expenses</h1>
               <p class="page-subtitle">Track, filter, and review claims filed under your account</p>
             </div>
-            <button class="btn btn-primary" onclick="Router.navigate('new-expense')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              New Expense
-            </button>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-secondary btn-export-csv" onclick="Expenses.exportCSV()" title="Export filtered records to CSV">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export CSV
+              </button>
+              <button class="btn btn-primary" onclick="Router.navigate('new-expense')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New Expense
+              </button>
+            </div>
           </div>
 
           <!-- Filter Bar -->
@@ -397,6 +403,7 @@
               <option value="pending">Pending</option>
               <option value="in_review">In Review</option>
               <option value="approved">Approved</option>
+              <option value="paid">Reimbursed (Paid)</option>
               <option value="rejected">Rejected</option>
             </select>
             <select class="form-control filter-select" id="my-expenses-sort">
@@ -436,8 +443,12 @@
           <div class="page-header">
             <div>
               <h1 class="page-title">Company Expenses</h1>
-              <p class="page-subtitle">Consolidated view of organization claims for review and audit</p>
+              <p class="page-subtitle">Consolidated view of organization claims for review, payout disbursement, and audit</p>
             </div>
+            <button class="btn btn-secondary btn-export-csv" onclick="Expenses.exportCSV()" title="Export company ledger to CSV for Accounting (Excel, Tally, QuickBooks)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export Ledger CSV
+            </button>
           </div>
 
           <div class="filter-bar">
@@ -454,6 +465,7 @@
               <option value="pending">Pending</option>
               <option value="in_review">In Review</option>
               <option value="approved">Approved</option>
+              <option value="paid">Reimbursed (Paid)</option>
               <option value="rejected">Rejected</option>
             </select>
             <select class="form-control filter-select" id="all-expenses-sort">

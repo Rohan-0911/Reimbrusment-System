@@ -399,6 +399,14 @@ textarea.form-control {
 }
 .badge-rejected::before { background-color: #ef4444; }
 
+.badge-paid {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+  font-weight: 600;
+}
+.badge-paid::before { background-color: #059669; }
+
 .badge-neutral {
   background-color: var(--status-neutral-bg);
   color: var(--status-neutral-text);

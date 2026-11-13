@@ -321,6 +321,32 @@ const NewExpense = {
       badgeEl.innerHTML = UI.authenticityBadge(ai.authenticity_score, ai.authenticity_status);
     }
 
+    // Render duplicate alert banner inside or above body if detected
+    let dupBanner = card.querySelector('.ai-duplicate-warning-banner');
+    if (ai.is_duplicate) {
+      const matchText = ai.duplicate_info 
+        ? `Conflicting claim ID: <strong>${ai.duplicate_info.id || ''}</strong> (${ai.duplicate_info.description || 'Existing ledger record'}) filed on ${ai.duplicate_info.expense_date || 'prior date'}.`
+        : 'Exact duplicate receipt voucher or invoice ID detected against company archives.';
+      
+      if (!dupBanner) {
+        dupBanner = document.createElement('div');
+        dupBanner.className = 'ai-duplicate-warning-banner';
+        const header = card.querySelector('.ai-auth-header');
+        header.insertAdjacentElement('afterend', dupBanner);
+      }
+      dupBanner.innerHTML = `
+        <div class="ai-duplicate-icon">⚠️</div>
+        <div class="ai-duplicate-text">
+          <strong>Duplicate Receipt Alert (Potential Fraud Flag)</strong>
+          ${matchText}
+          The authenticity score is restricted and this submission will require administrative fraud clearance.
+        </div>
+      `;
+      dupBanner.style.display = 'flex';
+    } else if (dupBanner) {
+      dupBanner.style.display = 'none';
+    }
+
     if (reasonEl) {
       reasonEl.textContent = ai.authenticity_reason || 'Document structure and metadata verified successfully.';
     }
@@ -338,6 +364,9 @@ const NewExpense = {
       }
       if (ai.tax_amount) {
         tags.push(`<span class="ai-auth-tag">Tax: <strong>${ai.currency || ''} ${ai.tax_amount}</strong></span>`);
+      }
+      if (ai.is_duplicate) {
+        tags.push(`<span class="badge-duplicate">DUPLICATE CLAIM</span>`);
       }
       tagsEl.innerHTML = tags.join('');
     }
@@ -413,6 +442,18 @@ const NewExpense = {
         }
         if (this.aiData.authenticity_reason) {
           formData.append('ai_authenticity_reason', this.aiData.authenticity_reason);
+        }
+        if (this.aiData.receipt_hash) {
+          formData.append('receipt_hash', this.aiData.receipt_hash);
+        }
+        if (this.aiData.invoice_or_tax_id) {
+          formData.append('invoice_or_tax_id', this.aiData.invoice_or_tax_id);
+        }
+        if (this.aiData.is_duplicate !== undefined) {
+          formData.append('is_duplicate', this.aiData.is_duplicate ? 'true' : 'false');
+        }
+        if (this.aiData.duplicate_of) {
+          formData.append('duplicate_of', this.aiData.duplicate_of);
         }
         formData.append('ai_extracted_data', JSON.stringify(this.aiData));
         if (this.aiData.ocr_text) {

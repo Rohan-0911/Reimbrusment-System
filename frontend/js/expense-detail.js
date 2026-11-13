@@ -120,29 +120,96 @@ const ExpenseDetail = {
     }).join('');
 
     // Final outcome
-    const finalHTML = expStatus === 'approved'
+    const finalHTML = expStatus === 'paid'
       ? `<div class="timeline-item">
-           <div class="timeline-icon done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-           <div class="timeline-content"><div class="timeline-step" style="color:#059669;font-weight:700">Fully Approved</div></div>
+           <div class="timeline-icon done" style="background:#ecfdf5;border-color:#10b981;color:#059669"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+           <div class="timeline-content">
+             <div class="timeline-step" style="color:#059669;font-weight:700">Disbursed (Paid)</div>
+             <div class="timeline-meta">UTR: <strong>${expense.utr_number || 'N/A'}</strong> ${expense.paid_at ? ' • ' + UI.relativeTime(expense.paid_at) : ''}</div>
+           </div>
          </div>`
-      : expStatus === 'rejected'
+      : expStatus === 'approved'
         ? `<div class="timeline-item">
-           <div class="timeline-icon rejected"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
-           <div class="timeline-content"><div class="timeline-step" style="color:#dc2626;font-weight:700">Claim Rejected</div></div>
-         </div>`
-        : '';
+             <div class="timeline-icon done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+             <div class="timeline-content">
+               <div class="timeline-step" style="color:#059669;font-weight:700">Audit Approved</div>
+               <div class="timeline-meta">Awaiting Bank Disbursement</div>
+             </div>
+           </div>`
+        : expStatus === 'rejected'
+          ? `<div class="timeline-item">
+             <div class="timeline-icon rejected"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+             <div class="timeline-content"><div class="timeline-step" style="color:#dc2626;font-weight:700">Claim Rejected</div></div>
+           </div>`
+          : '';
 
     el.innerHTML = `
       <div class="detail-grid">
         <!-- Main info -->
         <div class="detail-main">
+          ${expense.is_duplicate || expense.duplicate_of ? `
+            <div class="duplicate-audit-box" style="margin-bottom:16px">
+              <div class="ai-duplicate-icon">⚠️</div>
+              <div>
+                <strong style="color:#9f1239;font-size:0.9375rem">Potential Duplicate Receipt Flagged</strong>
+                <p style="margin:4px 0 6px;font-size:0.8125rem;color:#881337;line-height:1.45">
+                  This voucher matches an existing company expense claim (matching file SHA-256 hash or invoice/tax registration).
+                  ${expense.duplicate_of ? `<br>Conflicting Original Claim: <a href="javascript:void(0)" onclick="ExpenseDetail.open('${expense.duplicate_of}')" style="font-weight:700;color:#9f1239;text-decoration:underline;">[ID: ${expense.duplicate_of}]</a>` : ''}
+                </p>
+                <span class="badge-duplicate">FRAUD RISK WARNING</span>
+              </div>
+            </div>
+          ` : ''}
+
+          ${expense.status === 'paid' ? `
+            <div class="payout-card" style="margin-bottom:16px">
+              <div class="payout-header">
+                <div class="payout-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <span>Reimbursement Disbursed & Settled</span>
+                </div>
+                <span class="badge badge-paid">PAID & SETTLED</span>
+              </div>
+              <div class="payout-body">
+                <div class="payout-utr-box">
+                  <div>
+                    <div class="payout-utr-label">Bank UTR / Transaction Reference</div>
+                    <div class="payout-utr-val">${expense.utr_number || 'N/A'}</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="payout-utr-label">Disbursement Date</div>
+                    <div style="font-family:var(--font-mono);font-size:0.875rem;font-weight:600;color:#065f46">
+                      ${expense.paid_at ? UI.formatDate(expense.paid_at) : 'Cleared'}
+                    </div>
+                  </div>
+                </div>
+                <div class="ai-audit-meta-grid" style="border-top:1px solid #d1fae5">
+                  <div>
+                    <div class="ai-audit-meta-item-label">Disbursed By</div>
+                    <div class="ai-audit-meta-item-val">${expense.paid_by_name || 'Corporate Accounts'}</div>
+                  </div>
+                  <div>
+                    <div class="ai-audit-meta-item-label">Payout Status</div>
+                    <div class="ai-audit-meta-item-val" style="color:#059669">Bank Transfer Complete</div>
+                  </div>
+                  ${expense.payout_notes ? `
+                    <div style="grid-column: 1 / -1">
+                      <div class="ai-audit-meta-item-label">Payment Remarks</div>
+                      <div class="ai-audit-meta-item-val" style="font-family:inherit;font-weight:normal;color:#334155">${expense.payout_notes}</div>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
           <!-- Header card -->
           <div class="card" style="padding:24px">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
               <div>
                 <h2 style="font-size:1.1875rem;margin-bottom:8px;font-weight:700;letter-spacing:-0.01em">${expense.description}</h2>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                  ${UI.statusBadge(expense.status)}
+                  ${UI.statusBadge(expense.status, expense.utr_number)}
                   <span class="expense-category-tag">${expense.category_name}</span>
                   <span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono)">${UI.formatDate(expense.expense_date)}</span>
                 </div>
@@ -359,6 +426,45 @@ const ExpenseDetail = {
             </div>
           ` : ''}
 
+          <!-- Admin Payout Execution (if admin and status is approved) -->
+          ${AppState.isAdmin() && expense.status === 'approved' ? `
+            <div class="card" style="border:1.5px solid #a7f3d0;background:#f0fdf4">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-size:1.125rem">💸</span>
+                <h3 style="font-size:0.9375rem;font-weight:700;color:#065f46;margin:0">Execute Reimbursement Payout</h3>
+              </div>
+              <p style="font-size:0.8125rem;color:#047857;margin-bottom:12px;line-height:1.4">
+                Execute bank disbursement and enter the Bank UTR / Reference number to record payment.
+              </p>
+              <div class="form-group" style="margin-bottom:10px">
+                <label class="form-label" for="payout-utr-input" style="color:#065f46;font-weight:700">Bank UTR / Transaction Ref *</label>
+                <input type="text" id="payout-utr-input" class="form-control font-mono" style="background:#ffffff" placeholder="e.g. HDFC000192847291 or UPI/4291823" required>
+              </div>
+              <div class="form-group" style="margin-bottom:14px">
+                <label class="form-label" for="payout-notes-input" style="color:#065f46">Disbursement Remarks (Optional)</label>
+                <input type="text" id="payout-notes-input" class="form-control" style="background:#ffffff" placeholder="e.g. Disbursed via Corporate NetBanking">
+              </div>
+              <button class="btn btn-primary w-full" id="btn-record-payout" style="background:linear-gradient(135deg, #10b981, #059669);border-color:#059669;color:#ffffff" onclick="ExpenseDetail.handlePayout('${expense.id}')">
+                Mark as Paid & Disbursed
+              </button>
+            </div>
+          ` : ''}
+
+          <!-- Employee Notice if Approved -->
+          ${!AppState.isAdmin() && expense.status === 'approved' ? `
+            <div class="card" style="border:1px solid #a7f3d0;background:#f0fdf4">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:1.25rem">🎉</span>
+                <div>
+                  <h4 style="font-size:0.875rem;font-weight:700;color:#065f46;margin:0">Approved — Pending Bank Transfer</h4>
+                  <p style="font-size:0.75rem;color:#047857;margin:3px 0 0;line-height:1.4">
+                    Your claim has been audited and approved. Finance will disburse the funds; your Bank UTR reference will appear here once settled.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
           <!-- Back button -->
           <button class="btn btn-secondary w-full" onclick="history.back()">
             Back to Ledger List
@@ -366,6 +472,48 @@ const ExpenseDetail = {
         </div>
       </div>
     `;
+  },
+
+  async handlePayout(expenseId) {
+    const utrInput = document.getElementById('payout-utr-input');
+    const notesInput = document.getElementById('payout-notes-input');
+    const utr = utrInput?.value?.trim();
+    const notes = notesInput?.value?.trim() || '';
+
+    if (!utr) {
+      Toast.show('Please provide the Bank UTR / Transaction Reference number.', 'error');
+      utrInput?.focus();
+      return;
+    }
+
+    const btn = document.getElementById('btn-record-payout');
+    UI.setButtonLoading(btn, true, 'Recording payout...');
+
+    try {
+      await API.expenses.recordPayout(expenseId, {
+        utr_number: utr,
+        payout_notes: notes,
+        paid_at: new Date().toISOString()
+      });
+      Toast.show('Disbursement confirmed! Claim status updated to Reimbursed (Paid).', 'success');
+      await this.open(expenseId);
+    } catch (err) {
+      // Offline / fallback
+      if (this.currentExpense) {
+        this.currentExpense.status = 'paid';
+        this.currentExpense.payout_status = 'paid';
+        this.currentExpense.utr_number = utr;
+        this.currentExpense.payout_notes = notes;
+        this.currentExpense.paid_at = new Date().toISOString();
+        this.currentExpense.paid_by_name = AppState.user?.name || 'Administrator';
+        Toast.show('Payout recorded (local session).', 'success');
+        this.render(this.currentExpense, { status: 'paid' }, []);
+      } else {
+        Toast.show(err.message || 'Failed to record payout', 'error');
+      }
+    } finally {
+      UI.setButtonLoading(btn, false);
+    }
   },
 
   async handleVote(expenseId, vote) {

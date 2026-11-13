@@ -63,22 +63,83 @@ const Expenses = {
 
   getMockExpenses() {
     const cats = ['Travel', 'Accommodation', 'Meals & Entertainment', 'Office Supplies', 'Software & Subscriptions'];
-    const statuses = ['approved', 'rejected', 'in_review', 'pending'];
+    const statuses = ['paid', 'approved', 'rejected', 'in_review', 'pending'];
     const names = ['Alice Johnson', 'Bob Williams', 'Jane Smith', AppState.user?.name || 'You'];
 
-    return Array.from({ length: 15 }, (_, i) => ({
-      id: `mock-${i + 1}`,
-      description: ['Q4 Conference Travel', 'Team Dinner', 'Hotel NYC', 'Office Supplies', 'Figma License', 'Flight - Mumbai', 'Client Lunch', 'Laptop Stand', 'AWS Credits', 'Training Course'][i % 10],
-      amount: [4200, 680, 1850, 320, 144, 3100, 540, 220, 980, 1500][i % 10],
-      original_amount: [4200, 680, 1850, 320, 144, 3100, 540, 220, 980, 1500][i % 10],
-      original_currency: AppState.company?.currency_code || 'INR',
-      status: statuses[i % statuses.length],
-      category_name: cats[i % cats.length],
-      expense_date: new Date(Date.now() - i * 3 * 86400000).toISOString().split('T')[0],
-      submitter_name: names[i % names.length],
-      created_at: new Date(Date.now() - i * 3 * 86400000).toISOString(),
-      has_receipt: i % 3 === 0,
-    }));
+    return Array.from({ length: 15 }, (_, i) => {
+      const st = statuses[i % statuses.length];
+      return {
+        id: `mock-${i + 1}`,
+        description: ['Q4 Conference Travel', 'Team Dinner', 'Hotel NYC', 'Office Supplies', 'Figma License', 'Flight - Mumbai', 'Client Lunch', 'Laptop Stand', 'AWS Credits', 'Training Course'][i % 10],
+        amount: [4200, 680, 1850, 320, 144, 3100, 540, 220, 980, 1500][i % 10],
+        original_amount: [4200, 680, 1850, 320, 144, 3100, 540, 220, 980, 1500][i % 10],
+        original_currency: AppState.company?.currency_code || 'INR',
+        status: st,
+        payout_status: st === 'paid' ? 'paid' : 'unpaid',
+        utr_number: st === 'paid' ? `HDFC${10029384 + i}` : null,
+        paid_at: st === 'paid' ? new Date(Date.now() - i * 86400000).toISOString() : null,
+        is_duplicate: i === 4,
+        duplicate_of: i === 4 ? 'mock-1' : null,
+        ai_authenticity_score: i === 4 ? 15 : (95 - (i * 5)),
+        ai_authenticity_status: i === 4 ? 'SUSPICIOUS' : ((95 - (i * 5)) >= 80 ? 'GENUINE' : 'NEEDS_REVIEW'),
+        category_name: cats[i % cats.length],
+        expense_date: new Date(Date.now() - i * 3 * 86400000).toISOString().split('T')[0],
+        submitter_name: names[i % names.length],
+        created_at: new Date(Date.now() - i * 3 * 86400000).toISOString(),
+        has_receipt: i % 3 === 0,
+      };
+    });
+  },
+
+  async exportCSV() {
+    Toast.show('Generating CSV export...', 'info');
+    try {
+      await API.expenses.downloadExport(this.filters.search, this.filters.status);
+      Toast.show('CSV ledger exported successfully.', 'success');
+    } catch (err) {
+      console.warn('[CSV Export] API export failed or offline, generating from client ledger:', err);
+      this.generateClientCSV();
+    }
+  },
+
+  generateClientCSV() {
+    const list = this.filtered.length ? this.filtered : this.expenses;
+    if (!list.length) {
+      Toast.show('No records available to export.', 'warning');
+      return;
+    }
+    const headers = [
+      'Claim ID', 'Submission Date', 'Expense Date', 'Employee Name',
+      'Description', 'Category', 'Claimed Amount', 'Claimed Currency', 'Approval Status',
+      'Payout Status', 'Bank UTR / Ref Number', 'AI Authenticity Score', 'Duplicate Detected'
+    ];
+    const rows = list.map(e => [
+      `"${e.id || ''}"`,
+      `"${e.created_at ? e.created_at.slice(0, 10) : ''}"`,
+      `"${e.expense_date || ''}"`,
+      `"${(e.submitter_name || '').replace(/"/g, '""')}"`,
+      `"${(e.description || '').replace(/"/g, '""')}"`,
+      `"${(e.category_name || '').replace(/"/g, '""')}"`,
+      e.amount || 0,
+      `"${e.original_currency || AppState.company?.currency_code || 'INR'}"`,
+      `"${(e.status || '').toUpperCase()}"`,
+      `"${(e.payout_status || (e.status === 'paid' ? 'paid' : 'unpaid')).toUpperCase()}"`,
+      `"${e.utr_number || ''}"`,
+      `"${e.ai_authenticity_score !== undefined && e.ai_authenticity_score !== null ? e.ai_authenticity_score + '%' : 'N/A'}"`,
+      `"${e.is_duplicate || e.duplicate_of ? 'YES (DUPLICATE)' : 'NO'}"`
+    ]);
+
+    const csvContent = '\ufeff' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reimbursement_ledger_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    Toast.show('CSV ledger downloaded successfully.', 'success');
   },
 
   bindFilterEvents() {
@@ -175,6 +236,7 @@ const Expenses = {
         <td>
           <div style="font-weight:600;font-size:0.875rem">${exp.description}</div>
           <div style="font-size:0.75rem;font-family:var(--font-mono);color:var(--text-muted)">${UI.relativeTime(exp.created_at)}</div>
+          ${exp.is_duplicate || exp.duplicate_of ? `<span class="badge-duplicate" title="Conflicting duplicate receipt detected">DUPLICATE</span>` : ''}
         </td>
         ${showSubmitter ? `<td><div style="font-size:0.875rem">${exp.submitter_name || 'N/A'}</div></td>` : ''}
         <td><span class="expense-category-tag">${exp.category_name || 'Uncategorized'}</span></td>
@@ -184,7 +246,7 @@ const Expenses = {
         ? `<div class="expense-currency">${exp.original_amount} ${exp.original_currency}</div>`
         : ''}
         </td>
-        <td>${UI.statusBadge(exp.status)}</td>
+        <td>${UI.statusBadge(exp.status, exp.utr_number)}</td>
         <td class="expense-date">${UI.formatDate(exp.expense_date)}</td>
         <td>${UI.authenticityBadge(exp.ai_authenticity_score, exp.ai_authenticity_status)}</td>
         <td>

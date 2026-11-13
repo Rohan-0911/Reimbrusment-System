@@ -109,6 +109,42 @@ const API = {
     vote: (id, data) => API.post(`/expenses/${id}/vote`, data),
     approve: (id, comment = '') => API.post(`/expenses/${id}/vote`, { vote: 'approve', comment }),
     reject: (id, comment = '') => API.post(`/expenses/${id}/vote`, { vote: 'reject', comment }),
+    recordPayout: (id, data) => API.post(`/expenses/${id}/payout`, data),
+    downloadExport: async (search = '', status = '') => {
+      const q = new URLSearchParams();
+      if (search) q.append('search', search);
+      if (status) q.append('status', status);
+      const url = `${API_BASE}/expenses/export?${q.toString()}`;
+      const headers = {};
+      if (AppState.token) {
+        headers['Authorization'] = `Bearer ${AppState.token}`;
+      }
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        throw new Error('Export download failed');
+      }
+      const blob = await res.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      const contentDisp = res.headers.get('Content-Disposition');
+      let filename = `reimbursement_ledger_${new Date().toISOString().slice(0, 10)}.csv`;
+      if (contentDisp && contentDisp.includes('filename=')) {
+        const match = contentDisp.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    },
+    exportUrl: (search = '', status = '') => {
+      const q = new URLSearchParams();
+      if (search) q.append('search', search);
+      if (status) q.append('status', status);
+      return `http://localhost:5001/api/expenses/export?${q.toString()}`;
+    },
   },
 
   // Admin
@@ -302,15 +338,18 @@ const UI = {
   },
 
   // Status badge HTML
-  statusBadge(status) {
+  statusBadge(status, utr = null) {
     const labels = {
       approved: 'Approved',
+      paid: 'Reimbursed',
       rejected: 'Rejected',
       pending: 'Pending',
       in_review: 'In Review',
       cancelled: 'Cancelled'
     };
-    return `<span class="badge badge-${status}">${labels[status] || status}</span>`;
+    const titleAttr = (status === 'paid' && utr) ? ` title="Disbursed via Bank UTR: ${utr}"` : '';
+    const icon = status === 'paid' ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>' : '';
+    return `<span class="badge badge-${status}"${titleAttr}>${icon}${labels[status] || status}</span>`;
   },
 
   // AI Authenticity Score & Status badge HTML

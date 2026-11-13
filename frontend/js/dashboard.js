@@ -45,7 +45,8 @@ const Dashboard = {
     return {
       total: { count: isAdmin ? 48 : 7, total: isAdmin ? 72000 : 9500 },
       byStatus: [
-        { status: 'approved', count: isAdmin ? 28 : 3, total: isAdmin ? 72000 : 9500 },
+        { status: 'paid', count: isAdmin ? 18 : 2, total: isAdmin ? 48000 : 6200 },
+        { status: 'approved', count: isAdmin ? 10 : 1, total: isAdmin ? 24000 : 3300 },
         { status: 'in_review', count: isAdmin ? 12 : 2, total: isAdmin ? 35000 : 5400 },
         { status: 'pending', count: isAdmin ? 5 : 1, total: isAdmin ? 10000 : 2100 },
         { status: 'rejected', count: isAdmin ? 3 : 1, total: isAdmin ? 7500 : 1200 },
@@ -81,6 +82,9 @@ const Dashboard = {
     const statusMap = {};
     (byStatus || []).forEach(s => { statusMap[s.status] = s; });
 
+    const approvedCount = (statusMap.approved?.count || 0) + (statusMap.paid?.count || 0);
+    const approvedTotal = (statusMap.approved?.total || 0) + (statusMap.paid?.total || 0);
+
     // ── Stats cards ────────────────────────────────────────
     const statsEl = document.getElementById('dashboard-stats');
     if (statsEl) {
@@ -100,15 +104,15 @@ const Dashboard = {
         </div>
         <div class="stat-card">
           <div class="stat-header">
-            <span class="stat-label">Approved</span>
+            <span class="stat-label">Approved & Paid</span>
             <div class="stat-icon-wrap stat-icon-green">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
           </div>
-          <div class="stat-value">${statusMap.approved?.count || 0}</div>
+          <div class="stat-value">${approvedCount}</div>
           <div class="stat-meta">
             <span class="stat-trend stat-trend-up">Cleared</span>
-            <span>Ready for payout</span>
+            <span>Approved + Reimbursed</span>
           </div>
         </div>
         <div class="stat-card">
@@ -126,15 +130,15 @@ const Dashboard = {
         </div>
         <div class="stat-card">
           <div class="stat-header">
-            <span class="stat-label">Total Volume</span>
+            <span class="stat-label">Total Spend</span>
             <div class="stat-icon-wrap stat-icon-purple">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
           </div>
-          <div class="stat-value">${sym}${((statusMap.approved?.total ?? total?.total ?? 0) / 1000).toFixed(1)}k</div>
+          <div class="stat-value">${sym}${(approvedTotal / 1000).toFixed(1)}k</div>
           <div class="stat-meta">
             <span class="stat-trend stat-trend-up">Approved</span>
-            <span>Total approved spend</span>
+            <span>Approved & Paid spend</span>
           </div>
         </div>
       `;
@@ -142,6 +146,7 @@ const Dashboard = {
 
     // ── Donut chart: by status ─────────────────────────────
     const statusColors = {
+      paid: '#059669',         // Deep emerald for reimbursed
       approved: '#10b981',     // Vibrant emerald
       in_review: '#3b82f6',    // Vibrant blue
       pending: '#f59e0b',      // Amber
@@ -205,7 +210,7 @@ const Dashboard = {
             </td>
             <td><span class="expense-category-tag">${exp.category_name}</span></td>
             <td class="expense-amount">${UI.formatCurrency(exp.amount, AppState.company?.currency_code, sym)}</td>
-            <td>${UI.statusBadge(exp.status)}</td>
+            <td>${UI.statusBadge(exp.status, exp.utr_number)}</td>
             <td class="expense-date">${UI.formatDate(exp.expense_date)}</td>
           </tr>
         `).join('');

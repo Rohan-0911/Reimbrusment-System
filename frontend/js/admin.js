@@ -281,7 +281,8 @@ const AdminStats = {
       company: AppState.company || { name: 'Reimbursement System Corp', currency_code: 'INR', currency_symbol: '₹', country: 'India' },
       userCount: { count: 12 },
       expenseStats: [
-        { status: 'approved', count: 28, total: 72000 },
+        { status: 'paid', count: 18, total: 48000 },
+        { status: 'approved', count: 10, total: 24000 },
         { status: 'in_review', count: 12, total: 35000 },
         { status: 'pending', count: 5, total: 10000 },
         { status: 'rejected', count: 3, total: 7500 },
@@ -300,9 +301,8 @@ const AdminStats = {
     const { company, userCount, expenseStats, topSpenders } = data;
     const sym = company?.currency_symbol || '₹';
     const total = (expenseStats || []).reduce((s, e) => ({ count: s.count + e.count, total: s.total + e.total }), { count: 0, total: 0 });
-    const approved = expenseStats?.find(e => e.status === 'approved');
-    const inReview = expenseStats?.find(e => e.status === 'in_review');
-    const approvedTotal = approved?.total || 0;
+    const approvedCount = (expenseStats?.filter(e => e.status === 'approved' || e.status === 'paid').reduce((acc, curr) => acc + curr.count, 0)) || 0;
+    const approvedTotal = (expenseStats?.filter(e => e.status === 'approved' || e.status === 'paid').reduce((acc, curr) => acc + curr.total, 0)) || 0;
 
     // KPI cards (Modern light analytics cards)
     const kpiEl = document.getElementById('admin-kpi-grid');
@@ -330,13 +330,13 @@ const AdminStats = {
         </div>
         <div class="metric-card">
           <div class="metric-header">
-            <span class="metric-label">Approved Claims</span>
+            <span class="metric-label">Approved & Paid Claims</span>
             <div class="stat-icon-wrap stat-icon-green">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
           </div>
-          <div class="metric-value">${approved?.count || 0}</div>
-          <div class="metric-meta">Audited and processed</div>
+          <div class="metric-value">${approvedCount}</div>
+          <div class="metric-meta">Audited and cleared</div>
         </div>
         <div class="metric-card">
           <div class="metric-header">
@@ -353,6 +353,7 @@ const AdminStats = {
 
     // Status chart: vibrant modern status palette
     const statusColors = { 
+      paid: '#059669',
       approved: '#10b981', 
       in_review: '#3b82f6', 
       pending: '#f59e0b', 

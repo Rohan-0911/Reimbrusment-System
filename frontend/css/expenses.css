@@ -847,4 +847,152 @@
   .detail-grid {
     grid-template-columns: 1fr;
   }
-}
+}
+
+/* ── Export CSV Button ───────────────────────────────────────── */
+.btn-export-csv {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-export-csv:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: var(--primary);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ── Duplicate Receipt Alert Elements ────────────────────────── */
+.badge-duplicate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background-color: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+  border-radius: var(--radius-xs);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.ai-duplicate-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: #fff1f2;
+  border: 1.5px solid #fda4af;
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  animation: shakeWarning 0.4s ease-in-out;
+}
+
+@keyframes shakeWarning {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.ai-duplicate-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.ai-duplicate-text {
+  font-size: 0.8125rem;
+  color: #881337;
+  line-height: 1.45;
+}
+
+.ai-duplicate-text strong {
+  display: block;
+  font-weight: 700;
+  color: #9f1239;
+  margin-bottom: 2px;
+}
+
+.duplicate-audit-box {
+  background: #fff1f2;
+  border: 1.5px solid #fecdd3;
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+/* ── Payout & Bank Settlement Elements ───────────────────────── */
+.payout-card {
+  border: 1px solid #a7f3d0;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.payout-header {
+  padding: 16px 20px;
+  background: #ecfdf5;
+  border-bottom: 1px solid #d1fae5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.payout-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #065f46;
+}
+
+.payout-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.payout-utr-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1.5px dashed #10b981;
+  border-radius: var(--radius-md);
+}
+
+.payout-utr-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #047857;
+  letter-spacing: 0.05em;
+}
+
+.payout-utr-val {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #064e3b;
+  letter-spacing: 0.04em;
+}
+

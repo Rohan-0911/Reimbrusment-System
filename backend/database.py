@@ -172,13 +172,22 @@ def create_tables():
             description       TEXT NOT NULL,
             expense_date      DATE NOT NULL,
             receipt_path      VARCHAR(500),
-            status            ENUM('pending','in_review','approved','rejected','cancelled')
+            status            ENUM('pending','in_review','approved','rejected','cancelled','paid')
                               NOT NULL DEFAULT 'in_review',
             ai_authenticity_score  INT DEFAULT NULL,
             ai_authenticity_status VARCHAR(50) DEFAULT NULL,
             ai_authenticity_reason TEXT DEFAULT NULL,
             ai_extracted_data      TEXT DEFAULT NULL,
             receipt_ocr_text       TEXT DEFAULT NULL,
+            receipt_hash           VARCHAR(64) DEFAULT NULL,
+            invoice_or_tax_id      VARCHAR(100) DEFAULT NULL,
+            is_duplicate           TINYINT(1) DEFAULT 0,
+            duplicate_of           VARCHAR(36) DEFAULT NULL,
+            payout_status          VARCHAR(32) NOT NULL DEFAULT 'unpaid',
+            utr_number             VARCHAR(100) DEFAULT NULL,
+            paid_at                DATETIME DEFAULT NULL,
+            paid_by                VARCHAR(36) DEFAULT NULL,
+            payout_notes           TEXT DEFAULT NULL,
             created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at        DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (company_id)   REFERENCES companies(id),
@@ -226,20 +235,43 @@ def create_tables():
             cur.execute(stmt)
         conn.commit()
 
-        # Ensure new AI columns exist on existing databases
-        ai_columns = [
+        # Ensure new columns exist on existing databases
+        new_columns = [
             ("ai_authenticity_score", "INT DEFAULT NULL"),
             ("ai_authenticity_status", "VARCHAR(50) DEFAULT NULL"),
             ("ai_authenticity_reason", "TEXT DEFAULT NULL"),
             ("ai_extracted_data", "TEXT DEFAULT NULL"),
             ("receipt_ocr_text", "TEXT DEFAULT NULL"),
+            ("receipt_hash", "VARCHAR(64) DEFAULT NULL"),
+            ("invoice_or_tax_id", "VARCHAR(100) DEFAULT NULL"),
+            ("is_duplicate", "TINYINT(1) DEFAULT 0"),
+            ("duplicate_of", "VARCHAR(36) DEFAULT NULL"),
+            ("payout_status", "VARCHAR(32) NOT NULL DEFAULT 'unpaid'"),
+            ("utr_number", "VARCHAR(100) DEFAULT NULL"),
+            ("paid_at", "DATETIME DEFAULT NULL"),
+            ("paid_by", "VARCHAR(36) DEFAULT NULL"),
+            ("payout_notes", "TEXT DEFAULT NULL"),
         ]
-        for col_name, col_def in ai_columns:
+        for col_name, col_def in new_columns:
             try:
                 cur.execute(f"ALTER TABLE expenses ADD COLUMN {col_name} {col_def}")
                 conn.commit()
             except Exception:
                 pass  # Already exists
+
+        # Ensure status enum includes 'paid'
+        try:
+            cur.execute("ALTER TABLE expenses MODIFY COLUMN status ENUM('pending','in_review','approved','rejected','cancelled','paid') NOT NULL DEFAULT 'in_review'")
+            conn.commit()
+        except Exception:
+            pass
+
+        # Ensure receipt_hash index exists
+        try:
+            cur.execute("CREATE INDEX idx_expenses_receipt_hash ON expenses(receipt_hash)")
+            conn.commit()
+        except Exception:
+            pass
 
         print(f"[OK] All MySQL tables ready in database '{os.getenv('DB_NAME', 'reimburseiq')}'.")
         return True

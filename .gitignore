@@ -31,6 +31,9 @@ ENV/
 backend/uploads/*
 !backend/uploads/.gitkeep
 
+Demo Photo
+Sample Bills
+
 # IDE & Editor files
 .idea/
 .vscode/
