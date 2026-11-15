@@ -28,7 +28,7 @@ if backend_dir not in sys.path:
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Any
 
 from database import fetch_all, fetch_one, execute
 from dependencies import get_current_user
@@ -405,14 +405,14 @@ async def create_expense(
     description:            str = Form(...),
     expense_date:           str = Form(...),
     receipt:                Optional[UploadFile] = File(None),
-    ai_authenticity_score:  Optional[int] = Form(None),
+    ai_authenticity_score:  Optional[Any] = Form(None),
     ai_authenticity_status: Optional[str] = Form(None),
     ai_authenticity_reason: Optional[str] = Form(None),
     ai_extracted_data:      Optional[str] = Form(None),
     receipt_ocr_text:       Optional[str] = Form(None),
     receipt_hash:           Optional[str] = Form(None),
     invoice_or_tax_id:      Optional[str] = Form(None),
-    is_duplicate:           Optional[int] = Form(0),
+    is_duplicate:           Optional[Any] = Form(0),
     duplicate_of:           Optional[str] = Form(None),
     user: dict = Depends(get_current_user),
 ):
@@ -421,6 +421,30 @@ async def create_expense(
     company = fetch_one("SELECT * FROM companies WHERE id = %s", (user["company_id"],))
     if not company:
         raise HTTPException(status_code=400, detail="Company not found")
+
+    # Normalize is_duplicate: accept bool, str ('true'/'false'/'1'/'0'), or int
+    is_dup_int = 0
+    if is_duplicate is not None:
+        if isinstance(is_duplicate, bool):
+            is_dup_int = 1 if is_duplicate else 0
+        elif isinstance(is_duplicate, (int, float)):
+            is_dup_int = 1 if int(is_duplicate) != 0 else 0
+        elif isinstance(is_duplicate, str):
+            clean_dup = is_duplicate.strip().lower()
+            if clean_dup in ("true", "1", "yes", "t"):
+                is_dup_int = 1
+            else:
+                is_dup_int = 0
+
+    # Normalize ai_authenticity_score: accept int, float, or str
+    score_val = None
+    if ai_authenticity_score is not None:
+        try:
+            s_str = str(ai_authenticity_score).strip().lower()
+            if s_str and s_str not in ("none", "null", "undefined", ""):
+                score_val = int(round(float(s_str)))
+        except (ValueError, TypeError):
+            score_val = None
 
     # Convert currency to company base currency
     original_amount = float(amount)
@@ -450,14 +474,14 @@ async def create_expense(
                 (user["company_id"], receipt_hash)
             )
             if existing_dup:
-                is_duplicate = 1
+                is_dup_int = 1
                 duplicate_of = existing_dup["id"]
 
         # If AI analysis was not passed from client-side scan, analyze automatically
-        if ai_authenticity_score is None:
+        if score_val is None:
             try:
                 analysis = await analyze_receipt(file_bytes, receipt.content_type, receipt.filename)
-                ai_authenticity_score  = analysis.get("authenticity_score")
+                score_val              = analysis.get("authenticity_score")
                 ai_authenticity_status = analysis.get("authenticity_status")
                 ai_authenticity_reason = analysis.get("authenticity_reason")
                 ai_extracted_data      = json.dumps(analysis, ensure_ascii=False)
@@ -481,10 +505,10 @@ async def create_expense(
             base_amount, original_amount, from_currency,
             company["currency_code"], category_id, description, expense_date,
             receipt_path,
-            ai_authenticity_score, ai_authenticity_status, ai_authenticity_reason,
+            score_val, ai_authenticity_status, ai_authenticity_reason,
             ai_extracted_data, receipt_ocr_text,
             receipt_hash, invoice_or_tax_id,
-            1 if is_duplicate else 0, duplicate_of,
+            is_dup_int, duplicate_of,
         ),
     )
 

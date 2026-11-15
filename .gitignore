@@ -55,3 +55,18 @@ desktop.ini
 *.pdf
 SQL_Queries_Reference.pdf
 sql_queries.pdf
+
+# Presentations & PPTX Files
+*.pptx
+DBMS_Reimbursement_Management_System_Updated.pptx
+DBMS Reimbursement Managemnet System PPT.pptx
+build_updated_ppt.py
+
+# Word Documents & Reports
+*.docx
+DBMS CP report.docx
+DBMS_CP_Report_Updated.docx
+build_complete_report.py
+
+
+

@@ -435,7 +435,8 @@ const NewExpense = {
       // If AI extracted data is available, attach authenticity scoring and OCR metadata
       if (this.aiData) {
         if (this.aiData.authenticity_score !== undefined && this.aiData.authenticity_score !== null) {
-          formData.append('ai_authenticity_score', this.aiData.authenticity_score);
+          const scoreNum = Math.round(Number(this.aiData.authenticity_score));
+          formData.append('ai_authenticity_score', isNaN(scoreNum) ? String(this.aiData.authenticity_score) : String(scoreNum));
         }
         if (this.aiData.authenticity_status) {
           formData.append('ai_authenticity_status', this.aiData.authenticity_status);
@@ -450,7 +451,7 @@ const NewExpense = {
           formData.append('invoice_or_tax_id', this.aiData.invoice_or_tax_id);
         }
         if (this.aiData.is_duplicate !== undefined) {
-          formData.append('is_duplicate', this.aiData.is_duplicate ? 'true' : 'false');
+          formData.append('is_duplicate', this.aiData.is_duplicate ? '1' : '0');
         }
         if (this.aiData.duplicate_of) {
           formData.append('duplicate_of', this.aiData.duplicate_of);
