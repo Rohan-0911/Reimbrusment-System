@@ -721,14 +721,31 @@
             <!-- Rendered by admin.js -->
           </div>
 
-          <!-- Charts row -->
+          <!-- Full Width Line Chart: Monthly Trend -->
+          <div class="chart-card-full">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-card-title">Expenditure Velocity & Monthly Trend</div>
+                <div class="chart-card-subtitle">Trailing corporate disbursement timeline and expenditure trajectory</div>
+              </div>
+              <div class="chart-header-badge" id="trend-total-badge">
+                <span class="badge-dot" style="background:#2563eb"></span>
+                <span id="trend-badge-text">Monthly Trailing Spend</span>
+              </div>
+            </div>
+            <div class="chart-canvas-wrap">
+              <canvas id="admin-trend-canvas" height="220" style="width:100%;height:220px;display:block"></canvas>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Status Donut & Category Bar -->
           <div class="analytics-grid">
             <!-- Status Donut -->
             <div class="chart-card">
               <div class="chart-card-header">
                 <div>
-                  <div class="chart-card-title">Value Allocation</div>
-                  <div class="chart-card-subtitle">Aggregated amount by approval status</div>
+                  <div class="chart-card-title">Status Allocation & Capital Volume</div>
+                  <div class="chart-card-subtitle">Claim count and capital distribution by approval state</div>
                 </div>
               </div>
               <div class="donut-container">
@@ -743,27 +760,85 @@
               </div>
             </div>
 
+            <!-- Category Bar Chart -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <div class="chart-card-title">Category Expenditure Breakdown</div>
+                  <div class="chart-card-subtitle">Aggregated expenditures by department budget code</div>
+                </div>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="admin-category-canvas" height="200" style="width:100%;height:200px;display:block"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Employee vs Expense Bar Chart & AI Authenticity Pie -->
+          <div class="analytics-grid">
+            <!-- Employee Expense Bar Chart -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <div class="chart-card-title">Employee Expense Allocation</div>
+                  <div class="chart-card-subtitle">Claimed capital vs approved reimbursement by team member</div>
+                </div>
+                <div class="chart-header-badge" style="background:#eff6ff;border-color:#bfdbfe">
+                  <span class="badge-dot" style="background:#2563eb"></span>
+                  <span style="color:#2563eb;margin-right:8px">Claimed</span>
+                  <span class="badge-dot" style="background:#10b981"></span>
+                  <span style="color:#059669">Approved</span>
+                </div>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="admin-employee-canvas" height="200" style="width:100%;height:200px;display:block"></canvas>
+              </div>
+            </div>
+
+            <!-- AI Compliance & Authenticity Pie -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <div class="chart-card-title">AI Audit & Authenticity Health</div>
+                  <div class="chart-card-subtitle">Gemini OCR verification, duplicate detection & risk classification</div>
+                </div>
+              </div>
+              <div class="donut-container">
+                <div class="donut-canvas-wrap">
+                  <canvas id="admin-compliance-pie" width="160" height="160"></canvas>
+                  <div class="donut-center">
+                    <div class="donut-center-value" id="admin-compliance-score">--</div>
+                    <div class="donut-center-label">Avg Score</div>
+                  </div>
+                </div>
+                <div class="chart-legend" id="admin-compliance-legend"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 3: Top Spenders & Corporate Registration Data -->
+          <div class="analytics-grid">
+            <!-- Top Spenders -->
+            <div class="spenders-card">
+              <div class="spenders-card-header">
+                <h3 style="font-size:0.875rem">Department Volume Leaders</h3>
+              </div>
+              <div id="admin-top-spenders">
+                <!-- Rendered by admin.js -->
+              </div>
+            </div>
+
             <!-- Company Info Card -->
             <div class="chart-card">
               <div class="chart-card-header">
                 <div>
                   <div class="chart-card-title">Corporate Registration Data</div>
-                  <div class="chart-card-subtitle">Entity configuration parameters</div>
+                  <div class="chart-card-subtitle">Entity configuration parameters and currency settings</div>
                 </div>
               </div>
               <div id="company-info">
                 <!-- Rendered by admin.js -->
               </div>
-            </div>
-          </div>
-
-          <!-- Top Spenders -->
-          <div class="spenders-card">
-            <div class="spenders-card-header">
-              <h3 style="font-size:0.875rem">Department Volume Leaders</h3>
-            </div>
-            <div id="admin-top-spenders">
-              <!-- Rendered by admin.js -->
             </div>
           </div>
 

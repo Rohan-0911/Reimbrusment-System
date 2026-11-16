@@ -261,8 +261,20 @@ const AdminUsers = {
 
 // Admin Stats & Analytics
 const AdminStats = {
+  lastData: null,
+  resizeHandlerAttached: false,
+
   async init() {
     UI.showPage('admin-stats');
+    if (!this.resizeHandlerAttached) {
+      window.addEventListener('resize', () => {
+        const page = document.getElementById('page-admin-stats');
+        if (page && page.style.display !== 'none' && this.lastData) {
+          this.renderCharts(this.lastData);
+        }
+      });
+      this.resizeHandlerAttached = true;
+    }
     await this.loadData();
   },
 
@@ -273,6 +285,7 @@ const AdminStats = {
     } catch {
       data = this.getMockStats();
     }
+    this.lastData = data;
     this.render(data);
   },
 
@@ -286,12 +299,41 @@ const AdminStats = {
         { status: 'pending', count: 17, total: 45000 },
         { status: 'rejected', count: 3, total: 7500 },
       ],
+      monthlyTrend: [
+        { month: '2026-05', count: 4, total: 32000, approved_total: 24000 },
+        { month: '2026-06', count: 6, total: 45000, approved_total: 38000 },
+        { month: '2026-07', count: 5, total: 39000, approved_total: 31000 },
+        { month: '2026-08', count: 7, total: 58000, approved_total: 51000 },
+        { month: '2026-09', count: 8, total: 64000, approved_total: 55000 },
+        { month: '2026-10', count: 10, total: 72000, approved_total: 62000 },
+        { month: '2026-11', count: 6, total: 38000, approved_total: 35000 },
+      ],
+      byCategory: [
+        { name: 'Office Supplies', count: 8, total: 73000, approved_total: 73000 },
+        { name: 'Meals & Entertainment', count: 5, total: 65000, approved_total: 48000 },
+        { name: 'Software & Subscriptions', count: 6, total: 17500, approved_total: 17500 },
+        { name: 'Travel', count: 7, total: 14200, approved_total: 12000 },
+        { name: 'Training & Education', count: 4, total: 8500, approved_total: 6500 },
+        { name: 'Accommodation', count: 2, total: 4200, approved_total: 3500 },
+      ],
+      complianceStats: {
+        authentic_count: 32,
+        duplicate_count: 2,
+        suspicious_count: 4,
+        avg_score: 93.5,
+      },
       topSpenders: [
         { name: 'Alice Johnson', role: 'employee', count: 8, total: 28000 },
         { name: 'Bob Williams', role: 'employee', count: 6, total: 19500 },
         { name: 'Jane Smith', role: 'employee', count: 5, total: 14200 },
         { name: 'Alex Lee', role: 'employee', count: 4, total: 9800 },
         { name: 'Mark Chen', role: 'employee', count: 5, total: 8900 },
+      ],
+      employeeExpenses: [
+        { name: 'Prabal', claim_count: 3, total_amount: 96697, approved_amount: 0 },
+        { name: 'Aadesh raut', claim_count: 8, total_amount: 76924, approved_amount: 73932 },
+        { name: 'Rohan', claim_count: 9, total_amount: 50550, approved_amount: 5099 },
+        { name: 'Aryan', claim_count: 3, total_amount: 1114, approved_amount: 0 },
       ],
     };
   },
@@ -350,51 +392,27 @@ const AdminStats = {
       `;
     }
 
-    // Status chart: vibrant modern status palette
-    const statusColors = { 
-      paid: '#059669',
-      approved: '#10b981', 
-      pending: '#f59e0b', 
-      rejected: '#ef4444' 
-    };
-
-    Charts.donut('admin-status-donut', (expenseStats || []).filter(s => s.status !== 'in_review').map(s => ({
-      value: s.count,
-      color: statusColors[s.status] || '#64748b'
-    })), { size: 160, thickness: 22 });
-
-    const adminDonutTotal = document.getElementById('admin-donut-total');
-    if (adminDonutTotal) adminDonutTotal.textContent = total.count;
-
-    const adminLegendEl = document.getElementById('admin-status-legend');
-    if (adminLegendEl) {
-      adminLegendEl.innerHTML = (expenseStats || [])
-        .filter(s => s.status !== 'in_review')
-        .map(s => `
-        <div class="legend-item">
-          <span class="legend-label">
-            <span class="legend-dot" style="background:${statusColors[s.status] || '#141618'}"></span>
-            ${s.status === 'pending' ? 'PENDING APPROVAL' : s.status.replace('_', ' ').toUpperCase()}
-          </span>
-          <span class="legend-value">${sym}${(s.total / 1000).toFixed(0)}k</span>
-        </div>
-      `).join('');
-    }
+    // Render Canvas Charts
+    this.renderCharts(data);
 
     // Top spenders
     const spendersEl = document.getElementById('admin-top-spenders');
     if (spendersEl) {
-      spendersEl.innerHTML = (topSpenders || []).map((s, i) => `
-        <div class="spender-item">
-          <div class="spender-rank">${String(i + 1).padStart(2, '0')}</div>
-          <div class="spender-avatar">${UI.initials(s.name)}</div>
-          <div class="spender-info">
-            <div class="spender-name">${s.name}</div>
-            <div class="spender-count">${s.count} approved claim${s.count !== 1 ? 's' : ''} / ${s.role.toUpperCase()}</div>
+      if (!topSpenders?.length) {
+        spendersEl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted)">No approved spenders recorded yet</div>`;
+      } else {
+        spendersEl.innerHTML = (topSpenders || []).map((s, i) => `
+          <div class="spender-item">
+            <div class="spender-rank">${String(i + 1).padStart(2, '0')}</div>
+            <div class="spender-avatar">${UI.initials(s.name)}</div>
+            <div class="spender-info">
+              <div class="spender-name">${s.name}</div>
+              <div class="spender-count">${s.count} approved claim${s.count !== 1 ? 's' : ''} / ${s.role.toUpperCase()}</div>
+            </div>
+            <div class="spender-total">${sym}${(s.total / 1000).toFixed(1)}k</div>
           </div>
-          <div class="spender-total">${sym}${(s.total / 1000).toFixed(1)}k</div>
-        </div>
-      `).join('');
+        `).join('');
+      }
     }
 
     // Company info
@@ -420,6 +438,154 @@ const AdminStats = {
           </div>
         </div>
       `;
+    }
+  },
+
+  renderCharts(data) {
+    const { company, expenseStats, monthlyTrend, byCategory, complianceStats, employeeExpenses } = data;
+    const sym = company?.currency_symbol || '₹';
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // ── 1. LINE CHART: Monthly Expenditure Trend ─────────────
+    if (monthlyTrend && monthlyTrend.length) {
+      const trendLabels = monthlyTrend.map(m => {
+        const parts = (m.month || '').split('-');
+        if (parts.length === 2) {
+          const y = parts[0].slice(-2);
+          const mi = parseInt(parts[1], 10);
+          return `${monthNames[mi - 1] || parts[1]} '${y}`;
+        }
+        return m.month;
+      });
+      const trendData = monthlyTrend.map(m => m.total);
+      const totalTrailing = trendData.reduce((a, b) => a + b, 0);
+
+      const badgeText = document.getElementById('trend-badge-text');
+      if (badgeText) badgeText.textContent = `Trailing Total: ${sym}${(totalTrailing / 1000).toFixed(1)}k`;
+
+      Charts.line('admin-trend-canvas', {
+        labels: trendLabels,
+        data: trendData,
+        color: '#2563eb',
+        fillColor: 'rgba(37, 99, 235, 0.16)',
+        unit: sym,
+        height: 220
+      });
+    }
+
+    // ── 2. DONUT CHART: Status & Value Allocation ────────────
+    // User requested: Blue for approved, Green for paid, Amber for pending, Red for rejected.
+    // Order: Paid -> Approved -> Pending -> Rejected.
+    const statusColors = { 
+      paid: '#10b981',      // Green for Paid
+      approved: '#2563eb',  // Blue for Approved
+      pending: '#f59e0b',   // Amber for Pending Approval
+      rejected: '#ef4444'   // Red for Rejected
+    };
+
+    const statusLabels = {
+      paid: 'PAID',
+      approved: 'APPROVED',
+      pending: 'PENDING APPROVAL',
+      rejected: 'REJECTED'
+    };
+
+    const STATUS_ORDER = ['paid', 'approved', 'pending', 'rejected'];
+
+    const sortedExpenseStats = [...(expenseStats || [])]
+      .filter(s => s.status !== 'in_review')
+      .sort((a, b) => {
+        const idxA = STATUS_ORDER.indexOf(a.status);
+        const idxB = STATUS_ORDER.indexOf(b.status);
+        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+      });
+
+    Charts.donut('admin-status-donut', sortedExpenseStats.map(s => ({
+      value: s.count,
+      color: statusColors[s.status] || '#64748b'
+    })), { size: 160, thickness: 22 });
+
+    const totalCount = sortedExpenseStats.reduce((sum, s) => sum + s.count, 0);
+    const adminDonutTotal = document.getElementById('admin-donut-total');
+    if (adminDonutTotal) adminDonutTotal.textContent = totalCount;
+
+    const adminLegendEl = document.getElementById('admin-status-legend');
+    if (adminLegendEl) {
+      adminLegendEl.innerHTML = sortedExpenseStats.map(s => `
+        <div class="legend-item">
+          <span class="legend-label">
+            <span class="legend-dot" style="background:${statusColors[s.status] || '#64748b'}"></span>
+            ${statusLabels[s.status] || s.status.replace('_', ' ').toUpperCase()} (${s.count})
+          </span>
+          <span class="legend-value">${sym}${(s.total / 1000).toFixed(1)}k</span>
+        </div>
+      `).join('');
+    }
+
+    // ── 3. BAR CHART: Category Expenditure Breakdown ─────────
+    if (byCategory && byCategory.length) {
+      const topCats = byCategory.slice(0, 6);
+      const catLabels = topCats.map(c => c.name);
+      const catData = topCats.map(c => c.total);
+      const catColors = ['#2563eb', '#3b82f6', '#0ea5e9', '#06b6d4', '#10b981', '#f59e0b'];
+
+      Charts.bar('admin-category-canvas', {
+        labels: catLabels,
+        data: catData,
+        colors: catColors,
+        unit: sym,
+        height: 200
+      });
+    }
+
+    // ── 4. BAR CHART: Employee Expense Allocation (Claimed vs Approved) ──
+    if (employeeExpenses && employeeExpenses.length) {
+      const empLabels = employeeExpenses.map(e => e.name);
+      const empClaimed = employeeExpenses.map(e => e.total_amount);
+      const empApproved = employeeExpenses.map(e => e.approved_amount);
+      const empColors = employeeExpenses.map(() => '#2563eb');
+
+      Charts.bar('admin-employee-canvas', {
+        labels: empLabels,
+        data: empClaimed,
+        secondaryData: empApproved,
+        colors: empColors,
+        secondaryColor: '#10b981',
+        unit: sym,
+        height: 200
+      });
+    }
+
+    // ── 5. PIE CHART: AI Audit & Authenticity Health ─────────
+    if (complianceStats) {
+      const authCount = complianceStats.authentic_count || 0;
+      const dupCount = complianceStats.duplicate_count || 0;
+      const suspCount = complianceStats.suspicious_count || 0;
+      const avgScore = complianceStats.avg_score || 94.0;
+
+      const complianceScoreEl = document.getElementById('admin-compliance-score');
+      if (complianceScoreEl) complianceScoreEl.textContent = `${Math.round(avgScore)}%`;
+
+      const complianceSegments = [
+        { label: 'Authentic / Clean', value: authCount, color: '#10b981' },
+        { label: 'Needs Audit / Review', value: suspCount, color: '#f59e0b' },
+        { label: 'Duplicate Blocked', value: dupCount, color: '#ef4444' },
+      ];
+
+      Charts.pie('admin-compliance-pie', complianceSegments, { size: 160, innerRatio: 0.5 });
+
+      const compLegendEl = document.getElementById('admin-compliance-legend');
+      if (compLegendEl) {
+        compLegendEl.innerHTML = complianceSegments.map(s => `
+          <div class="legend-item">
+            <span class="legend-label">
+              <span class="legend-dot" style="background:${s.color}"></span>
+              ${s.label}
+            </span>
+            <span class="legend-value">${s.value}</span>
+          </div>
+        `).join('');
+      }
     }
   }
 };

@@ -569,10 +569,10 @@ const Layout = {
   }
 };
 
-// ── Charts (Vanilla Canvas) ──────────────────────────────────
+// ── Charts (Vanilla Canvas Engine) ───────────────────────────
 const Charts = {
   // Draw a donut chart on a canvas
-  donut(canvasId, segments, { size = 160, thickness = 20 } = {}) {
+  donut(canvasId, segments, { size = 160, thickness = 22 } = {}) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -585,7 +585,9 @@ const Charts = {
     ctx.clearRect(0, 0, size, size);
 
     const cx = size / 2, cy = size / 2, r = (size - thickness) / 2;
-    const total = segments.reduce((s, seg) => s + (seg.value || 0), 0);
+    const activeSegments = (segments || []).filter(s => (s.value || 0) > 0);
+    const total = activeSegments.reduce((s, seg) => s + (seg.value || 0), 0);
+
     if (total === 0) {
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -596,11 +598,11 @@ const Charts = {
     }
 
     let startAngle = -Math.PI / 2;
-    const gap = segments.filter(s => s.value > 0).length > 1 ? 0.05 : 0;
+    const gap = activeSegments.length > 1 ? 0.04 : 0;
+    const availableArc = Math.PI * 2 - (gap * activeSegments.length);
 
-    segments.forEach(seg => {
-      if (!seg.value) return;
-      const slice = (seg.value / total) * (Math.PI * 2 - (gap * segments.length));
+    activeSegments.forEach(seg => {
+      const slice = (seg.value / total) * availableArc;
       ctx.beginPath();
       ctx.arc(cx, cy, r, startAngle, startAngle + slice);
       ctx.strokeStyle = seg.color;
@@ -608,6 +610,336 @@ const Charts = {
       ctx.lineCap = 'round';
       ctx.stroke();
       startAngle += slice + gap;
+    });
+  },
+
+  // Draw a solid/ring pie chart on a canvas
+  pie(canvasId, segments, { size = 160, innerRatio = 0.45 } = {}) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, size, size);
+
+    const cx = size / 2, cy = size / 2;
+    const outerR = size / 2 - 4;
+    const innerR = outerR * innerRatio;
+    const activeSegments = (segments || []).filter(s => (s.value || 0) > 0);
+    const total = activeSegments.reduce((s, seg) => s + (seg.value || 0), 0);
+
+    if (total === 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fill();
+      return;
+    }
+
+    let startAngle = -Math.PI / 2;
+    activeSegments.forEach(seg => {
+      const slice = (seg.value / total) * (Math.PI * 2);
+      const endAngle = startAngle + slice;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, startAngle, endAngle);
+      ctx.arc(cx, cy, innerR, endAngle, startAngle, true);
+      ctx.closePath();
+      ctx.fillStyle = seg.color;
+      ctx.fill();
+
+      // Delicate slice border
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      startAngle = endAngle;
+    });
+  },
+
+  // Draw an elegant, responsive line / area chart with gradient fill
+  line(canvasId, { labels = [], data = [], color = '#2563eb', fillColor = 'rgba(37, 99, 235, 0.14)', unit = '₹', height = 220 } = {}) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.max(canvas.parentElement ? canvas.parentElement.clientWidth : 500, 300);
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
+
+    const padL = 52, padR = 24, padT = 28, padB = 36;
+    const plotW = width - padL - padR;
+    const plotH = height - padT - padB;
+
+    if (!data.length) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '500 13px Plus Jakarta Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No historical timeline data available', width / 2, height / 2);
+      return;
+    }
+
+    const rawMax = Math.max(...data, 10);
+    let maxVal = Math.ceil(rawMax * 1.15);
+    if (maxVal > 1000) maxVal = Math.ceil(maxVal / 1000) * 1000;
+    else if (maxVal > 100) maxVal = Math.ceil(maxVal / 100) * 100;
+    else maxVal = Math.ceil(maxVal / 10) * 10;
+
+    // Draw horizontal gridlines & Y labels
+    ctx.lineWidth = 1;
+    ctx.font = '500 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+
+    for (let i = 0; i <= 4; i++) {
+      const yVal = (maxVal / 4) * i;
+      const yPos = padT + plotH - (i / 4) * plotH;
+
+      ctx.beginPath();
+      ctx.strokeStyle = i === 0 ? '#cbd5e1' : '#f1f5f9';
+      ctx.setLineDash(i === 0 ? [] : [4, 4]);
+      ctx.moveTo(padL, yPos);
+      ctx.lineTo(width - padR, yPos);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#94a3b8';
+      let labelText = `${unit}${Math.round(yVal)}`;
+      if (yVal >= 1000) labelText = `${unit}${(yVal / 1000).toFixed(1)}k`;
+      ctx.fillText(labelText, padL - 8, yPos + 4);
+    }
+
+    // Compute point coordinates
+    const points = data.map((val, idx) => {
+      const x = padL + (idx / Math.max(data.length - 1, 1)) * plotW;
+      const y = padT + plotH - (Math.max(val, 0) / maxVal) * plotH;
+      return { x, y, val };
+    });
+
+    // Gradient fill under the curve
+    const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+    grad.addColorStop(0, fillColor || 'rgba(37, 99, 235, 0.22)');
+    grad.addColorStop(1, 'rgba(37, 99, 235, 0.00)');
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 0; i < points.length - 1; i++) {
+      const xc = (points[i].x + points[i + 1].x) / 2;
+      const yc = (points[i].y + points[i + 1].y) / 2;
+      ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+    }
+    ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+    ctx.lineTo(points[points.length - 1].x, padT + plotH);
+    ctx.lineTo(points[0].x, padT + plotH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Smooth stroke
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 0; i < points.length - 1; i++) {
+      const xc = (points[i].x + points[i + 1].x) / 2;
+      const yc = (points[i].y + points[i + 1].y) / 2;
+      ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+    }
+    ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Data points & labels
+    points.forEach((pt, i) => {
+      // Circle dot
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Value label on top
+      if (data.length <= 10 || pt.val > 0) {
+        ctx.font = '600 10px JetBrains Mono, monospace';
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        let valText = `${unit}${Math.round(pt.val)}`;
+        if (pt.val >= 1000) valText = `${unit}${(pt.val / 1000).toFixed(1)}k`;
+        ctx.fillText(valText, pt.x, Math.max(pt.y - 8, 12));
+      }
+
+      // X-axis label
+      if (labels && labels[i]) {
+        ctx.font = '500 11px Plus Jakarta Sans, sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[i], pt.x, padT + plotH + 20);
+      }
+    });
+  },
+
+  // Draw a crisp vertical bar chart with rounded tops (supports single or grouped bars)
+  bar(canvasId, { labels = [], data = [], secondaryData = null, colors = [], secondaryColor = '#10b981', unit = '₹', height = 200 } = {}) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.max(canvas.parentElement ? canvas.parentElement.clientWidth : 500, 300);
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
+
+    const padL = 52, padR = 20, padT = 26, padB = 36;
+    const plotW = width - padL - padR;
+    const plotH = height - padT - padB;
+
+    if (!data.length) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '500 13px Plus Jakarta Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No expense records found', width / 2, height / 2);
+      return;
+    }
+
+    const allVals = secondaryData && secondaryData.length ? [...data, ...secondaryData] : data;
+    const rawMax = Math.max(...allVals, 10);
+    let maxVal = Math.ceil(rawMax * 1.15);
+    if (maxVal > 1000) maxVal = Math.ceil(maxVal / 1000) * 1000;
+    else if (maxVal > 100) maxVal = Math.ceil(maxVal / 100) * 100;
+    else maxVal = Math.ceil(maxVal / 10) * 10;
+
+    // Draw horizontal grid lines
+    ctx.lineWidth = 1;
+    ctx.font = '500 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+
+    for (let i = 0; i <= 3; i++) {
+      const yVal = (maxVal / 3) * i;
+      const yPos = padT + plotH - (i / 3) * plotH;
+
+      ctx.beginPath();
+      ctx.strokeStyle = i === 0 ? '#cbd5e1' : '#f1f5f9';
+      ctx.moveTo(padL, yPos);
+      ctx.lineTo(width - padR, yPos);
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      let labelText = `${unit}${Math.round(yVal)}`;
+      if (yVal >= 1000) labelText = `${unit}${(yVal / 1000).toFixed(1)}k`;
+      ctx.fillText(labelText, padL - 8, yPos + 4);
+    }
+
+    const defaultColors = ['#2563eb', '#3b82f6', '#0ea5e9', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6'];
+    const isGrouped = Array.isArray(secondaryData) && secondaryData.length > 0;
+    const slotW = plotW / data.length;
+
+    data.forEach((val, i) => {
+      const label = labels[i] || '';
+      const displayLabel = label.length > 9 ? label.slice(0, 8) + '…' : label;
+
+      if (isGrouped) {
+        // Dual / grouped bar: Primary (Claimed) and Secondary (Approved)
+        const secVal = secondaryData[i] || 0;
+        const totalBarW = Math.min(Math.max(slotW * 0.64, 22), 60);
+        const subW = (totalBarW - 4) / 2;
+        const startX = padL + i * slotW + (slotW - totalBarW) / 2;
+
+        // Bar 1: Claimed
+        const barH1 = (Math.max(val, 0) / maxVal) * plotH;
+        const y1 = padT + plotH - barH1;
+        const r1 = Math.min(4, barH1 / 2);
+        ctx.beginPath();
+        ctx.moveTo(startX, padT + plotH);
+        ctx.lineTo(startX, y1 + r1);
+        ctx.quadraticCurveTo(startX, y1, startX + r1, y1);
+        ctx.lineTo(startX + subW - r1, y1);
+        ctx.quadraticCurveTo(startX + subW, y1, startX + subW, y1 + r1);
+        ctx.lineTo(startX + subW, padT + plotH);
+        ctx.closePath();
+        ctx.fillStyle = colors[i] || '#2563eb';
+        ctx.fill();
+
+        // Bar 2: Approved
+        const startX2 = startX + subW + 4;
+        const barH2 = (Math.max(secVal, 0) / maxVal) * plotH;
+        const y2 = padT + plotH - barH2;
+        const r2 = Math.min(4, barH2 / 2);
+        ctx.beginPath();
+        ctx.moveTo(startX2, padT + plotH);
+        ctx.lineTo(startX2, y2 + r2);
+        ctx.quadraticCurveTo(startX2, y2, startX2 + r2, y2);
+        ctx.lineTo(startX2 + subW - r2, y2);
+        ctx.quadraticCurveTo(startX2 + subW, y2, startX2 + subW, y2 + r2);
+        ctx.lineTo(startX2 + subW, padT + plotH);
+        ctx.closePath();
+        ctx.fillStyle = secondaryColor;
+        ctx.fill();
+
+        // Value label on top of primary bar
+        ctx.font = '600 9px JetBrains Mono, monospace';
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        let valText1 = val >= 1000 ? `${unit}${(val / 1000).toFixed(1)}k` : `${unit}${Math.round(val)}`;
+        ctx.fillText(valText1, startX + subW / 2, Math.max(y1 - 5, 12));
+
+        // Value label on top of secondary bar (if > 0)
+        if (secVal > 0) {
+          ctx.fillStyle = '#065f46';
+          let valText2 = secVal >= 1000 ? `${unit}${(secVal / 1000).toFixed(1)}k` : `${unit}${Math.round(secVal)}`;
+          ctx.fillText(valText2, startX2 + subW / 2, Math.max(y2 - 5, 12));
+        }
+
+        // X-axis label centered under the pair
+        ctx.font = '500 11px Plus Jakarta Sans, sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.textAlign = 'center';
+        ctx.fillText(displayLabel, startX + totalBarW / 2, padT + plotH + 18);
+      } else {
+        // Standard single bar
+        const barW = Math.min(Math.max(slotW * 0.52, 14), 48);
+        const barH = (Math.max(val, 0) / maxVal) * plotH;
+        const x = padL + i * slotW + (slotW - barW) / 2;
+        const y = padT + plotH - barH;
+        const barColor = colors[i] || defaultColors[i % defaultColors.length];
+
+        const radius = Math.min(6, barH / 2);
+        ctx.beginPath();
+        ctx.moveTo(x, padT + plotH);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.lineTo(x + barW - radius, y);
+        ctx.quadraticCurveTo(x + barW, y, x + barW, y + radius);
+        ctx.lineTo(x + barW, padT + plotH);
+        ctx.closePath();
+        ctx.fillStyle = barColor;
+        ctx.fill();
+
+        ctx.font = '600 10px JetBrains Mono, monospace';
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        let valText = val >= 1000 ? `${unit}${(val / 1000).toFixed(1)}k` : `${unit}${Math.round(val)}`;
+        ctx.fillText(valText, x + barW / 2, Math.max(y - 6, 12));
+
+        ctx.font = '500 11px Plus Jakarta Sans, sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.textAlign = 'center';
+        ctx.fillText(displayLabel, x + barW / 2, padT + plotH + 18);
+      }
     });
   },
 

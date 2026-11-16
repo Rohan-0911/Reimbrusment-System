@@ -144,32 +144,47 @@ const Dashboard = {
     }
 
     // ── Donut chart: by status ─────────────────────────────
+    // User requirement: Blue for approved, Green for paid, Amber for pending, Red for rejected.
+    // Arranged in harmonious lifecycle order: Paid -> Approved -> Pending -> Rejected.
     const statusColors = {
-      paid: '#059669',         // Deep emerald for reimbursed
-      approved: '#10b981',     // Vibrant emerald
-      pending: '#f59e0b',      // Amber for pending approval
-      rejected: '#ef4444',     // Rose
+      paid: '#10b981',         // Crisp Green for reimbursed/paid
+      approved: '#2563eb',     // Corporate Blue for approved
+      pending: '#f59e0b',      // Warm Amber for pending approval
+      rejected: '#ef4444',     // Crimson Red for rejected
     };
 
-    const donutSegments = (byStatus || [])
+    const statusLabels = {
+      paid: 'Paid',
+      approved: 'Approved',
+      pending: 'Pending Approval',
+      rejected: 'Rejected',
+    };
+
+    const STATUS_ORDER = ['paid', 'approved', 'pending', 'rejected'];
+
+    const sortedStatuses = [...(byStatus || [])]
       .filter(s => s.status !== 'in_review')
-      .map(s => ({
-        value: s.count,
-        color: statusColors[s.status] || '#64748b',
-        label: s.status === 'pending' ? 'Pending Approval' : s.status
-      }));
+      .sort((a, b) => {
+        const idxA = STATUS_ORDER.indexOf(a.status);
+        const idxB = STATUS_ORDER.indexOf(b.status);
+        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+      });
+
+    const donutSegments = sortedStatuses.map(s => ({
+      value: s.count,
+      color: statusColors[s.status] || '#64748b',
+      label: statusLabels[s.status] || s.status
+    }));
 
     Charts.donut('donut-status', donutSegments, { size: 160, thickness: 22 });
 
     const legendEl = document.getElementById('status-legend');
     if (legendEl) {
-      legendEl.innerHTML = (byStatus || [])
-        .filter(s => s.status !== 'in_review')
-        .map(s => `
+      legendEl.innerHTML = sortedStatuses.map(s => `
         <div class="legend-item">
           <span class="legend-label">
             <span class="legend-dot" style="background:${statusColors[s.status] || '#64748b'}"></span>
-            ${s.status === 'pending' ? 'Pending Approval' : s.status.replace('_', ' ')}
+            ${statusLabels[s.status] || s.status.replace('_', ' ')}
           </span>
           <span class="legend-value">${s.count}</span>
         </div>

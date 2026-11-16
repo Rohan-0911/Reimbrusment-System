@@ -136,19 +136,93 @@ def company_stats(admin: dict = Depends(require_admin)):
         "FROM expenses WHERE company_id = %s GROUP BY status",
         (company_id,),
     )
+    for r in expense_stats:
+        r["total"] = float(r["total"])
 
-    # Top 5 spenders — ONLY include approved expenses
-    top_spenders = fetch_all(
-        "SELECT u.name, u.role, COUNT(*) AS count, COALESCE(SUM(e.amount),0) AS total "
-        "FROM expenses e JOIN users u ON e.submitted_by = u.id "
-        "WHERE e.company_id = %s AND e.status = 'approved' "
-        "GROUP BY u.id ORDER BY total DESC LIMIT 5",
+    # Monthly expenditure trend (last 12 active months)
+    monthly_trend = fetch_all(
+        """SELECT SUBSTRING(expense_date, 1, 7) AS month,
+                  COUNT(*) AS count,
+                  COALESCE(SUM(amount), 0) AS total,
+                  COALESCE(SUM(CASE WHEN status IN ('approved', 'paid') THEN amount ELSE 0 END), 0) AS approved_total
+           FROM expenses
+           WHERE company_id = %s AND expense_date IS NOT NULL
+           GROUP BY month
+           ORDER BY month ASC
+           LIMIT 12""",
         (company_id,),
     )
+    for r in monthly_trend:
+        r["total"] = float(r["total"])
+        r["approved_total"] = float(r["approved_total"])
+
+    # Category breakdown with total amount and count
+    by_category = fetch_all(
+        """SELECT ec.name,
+                  COUNT(*) AS count,
+                  COALESCE(SUM(e.amount), 0) AS total,
+                  COALESCE(SUM(CASE WHEN e.status IN ('approved', 'paid') THEN e.amount ELSE 0 END), 0) AS approved_total
+           FROM expenses e
+           JOIN expense_categories ec ON e.category_id = ec.id
+           WHERE e.company_id = %s
+           GROUP BY ec.name
+           ORDER BY total DESC""",
+        (company_id,),
+    )
+    for r in by_category:
+        r["total"] = float(r["total"])
+        r["approved_total"] = float(r["approved_total"])
+
+    # AI Audit, Authenticity & Fraud Risk Compliance stats
+    compliance_stats = fetch_one(
+        """SELECT
+             COUNT(CASE WHEN ai_authenticity_status = 'AUTHENTIC' OR (ai_authenticity_score >= 80 AND (is_duplicate = 0 OR is_duplicate IS NULL)) THEN 1 END) AS authentic_count,
+             COUNT(CASE WHEN is_duplicate = 1 OR duplicate_of IS NOT NULL THEN 1 END) AS duplicate_count,
+             COUNT(CASE WHEN ai_authenticity_status = 'SUSPICIOUS' OR (ai_authenticity_score < 80 AND ai_authenticity_score IS NOT NULL) THEN 1 END) AS suspicious_count,
+             COALESCE(ROUND(AVG(CASE WHEN ai_authenticity_score IS NOT NULL THEN ai_authenticity_score END), 1), 94.0) AS avg_score
+           FROM expenses
+           WHERE company_id = %s""",
+        (company_id,),
+    )
+    if compliance_stats:
+        compliance_stats["avg_score"] = float(compliance_stats["avg_score"] or 94.0)
+
+    # Top 5 spenders — include both approved and paid expenses
+    top_spenders = fetch_all(
+        """SELECT u.name, u.role, COUNT(*) AS count, COALESCE(SUM(e.amount),0) AS total
+           FROM expenses e JOIN users u ON e.submitted_by = u.id
+           WHERE e.company_id = %s AND e.status IN ('approved', 'paid')
+           GROUP BY u.id ORDER BY total DESC LIMIT 5""",
+        (company_id,),
+    )
+    for r in top_spenders:
+        r["total"] = float(r["total"])
+
+    # Employee expense allocation (claimed and approved per employee)
+    employee_expenses = fetch_all(
+        """SELECT u.id, u.name, u.role,
+                  COUNT(e.id) AS claim_count,
+                  COALESCE(SUM(e.amount), 0) AS total_amount,
+                  COALESCE(SUM(CASE WHEN e.status IN ('approved', 'paid') THEN e.amount ELSE 0 END), 0) AS approved_amount
+           FROM users u
+           LEFT JOIN expenses e ON u.id = e.submitted_by
+           WHERE u.company_id = %s
+           GROUP BY u.id, u.name, u.role
+           ORDER BY total_amount DESC
+           LIMIT 10""",
+        (company_id,),
+    )
+    for r in employee_expenses:
+        r["total_amount"] = float(r["total_amount"])
+        r["approved_amount"] = float(r["approved_amount"])
 
     return {
-        "company":      company,
-        "userCount":    user_count,
-        "expenseStats": expense_stats,
-        "topSpenders":  top_spenders,
+        "company":          company,
+        "userCount":        user_count,
+        "expenseStats":     expense_stats,
+        "topSpenders":      top_spenders,
+        "monthlyTrend":     monthly_trend,
+        "byCategory":       by_category,
+        "complianceStats":  compliance_stats,
+        "employeeExpenses": employee_expenses,
     }

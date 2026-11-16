@@ -48,9 +48,13 @@
   --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 
   /* Semantic Status Palette (Fresh, Light, Luminous) */
-  --status-approved-text: #065f46;
-  --status-approved-border: #a7f3d0;
-  --status-approved-bg: #ecfdf5;
+  --status-approved-text: #1d4ed8;
+  --status-approved-border: #bfdbfe;
+  --status-approved-bg: #eff6ff;
+
+  --status-paid-text: #065f46;
+  --status-paid-border: #a7f3d0;
+  --status-paid-bg: #ecfdf5;
 
   --status-inreview-text: #1e40af;
   --status-inreview-border: #bfdbfe;
@@ -376,7 +380,7 @@ textarea.form-control {
   color: var(--status-approved-text);
   border-color: var(--status-approved-border);
 }
-.badge-approved::before { background-color: #10b981; }
+.badge-approved::before { background-color: #2563eb; }
 
 .badge-in_review, .badge-inreview {
   background-color: var(--status-inreview-bg);
@@ -400,12 +404,12 @@ textarea.form-control {
 .badge-rejected::before { background-color: #ef4444; }
 
 .badge-paid {
-  background-color: #ecfdf5;
-  color: #065f46;
-  border-color: #a7f3d0;
+  background-color: var(--status-paid-bg);
+  color: var(--status-paid-text);
+  border-color: var(--status-paid-border);
   font-weight: 600;
 }
-.badge-paid::before { background-color: #059669; }
+.badge-paid::before { background-color: #10b981; }
 
 .badge-neutral {
   background-color: var(--status-neutral-bg);
